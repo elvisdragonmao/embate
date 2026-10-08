@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { arrangeColumns, defaultLabel, isCross, mapColumns, speechColumns, type Column } from "../lib/columns";
 import { formatOf, type FormatId, type Side } from "../lib/formats";
 import { createId } from "../lib/id";
 import { clockElapsed, prepClock, type Clock, type FlowRecord, type Idea, type IdeaColor } from "../lib/record";
@@ -19,8 +20,8 @@ interface FlowState {
 	record: FlowRecord | null;
 	/** Bumped on structural changes (not text) so the board knows when to animate layout. */
 	rev: number;
-	past: Idea[][];
-	future: Idea[][];
+	past: Snapshot[];
+	future: Snapshot[];
 	load: (record: FlowRecord) => void;
 	setTitle: (title: string) => void;
 	/** `id` guards against late writes from an editor of a record that was just closed. */
@@ -36,6 +37,8 @@ interface FlowState {
 	move: (id: string, drop: Drop) => void;
 	setFormat: (format: FormatId) => void;
 	setColumnLabel: (col: number, label: string) => void;
+	/** Shows or hides the format's crossfire / cross-examination columns. */
+	setCrossEx: (on: boolean) => void;
 	togglePrep: (side: Side) => void;
 	resetPrep: (side: Side) => void;
 	setPrepDuration: (side: Side, ms: number) => void;
@@ -44,6 +47,20 @@ interface FlowState {
 }
 
 const HISTORY_LIMIT = 200;
+
+/** What undo restores: the ideas' structure, the columns they sit in, and the format those columns came from. */
+interface Snapshot {
+	ideas: Idea[];
+	columns: Column[];
+	format: FormatId;
+}
+
+/** Moves ideas to their new column indexes, dropping those whose column went away (and links to them). */
+function remapIdeas(ideas: Idea[], map: number[]) {
+	const kept = ideas.filter(idea => (map[idea.col] ?? -1) >= 0);
+	const ids = new Set(kept.map(idea => idea.id));
+	return kept.map(idea => ({ ...idea, col: map[idea.col], from: idea.from && ids.has(idea.from) ? idea.from : null }));
+}
 
 /** Restores structure from a snapshot while keeping the latest text of ideas that still exist. */
 function mergeText(snapshot: Idea[], current: Idea[]) {
@@ -60,11 +77,13 @@ const sameStructure = (a: Idea[], b: Idea[]) =>
 	a.every((idea, index) => idea.id === b[index].id && idea.col === b[index].col && idea.parent === b[index].parent && idea.from === b[index].from && idea.color === b[index].color);
 
 /** Drops snapshots that would change nothing, e.g. after an empty idea was cleaned up without history. */
-function trimNoops(stack: Idea[][], current: Idea[]) {
+function trimNoops(stack: Snapshot[], current: Snapshot) {
 	let end = stack.length;
-	while (end > 0 && sameStructure(stack[end - 1], current)) end--;
+	while (end > 0 && stack[end - 1].columns === current.columns && stack[end - 1].format === current.format && sameStructure(stack[end - 1].ideas, current.ideas)) end--;
 	return end === stack.length ? stack : stack.slice(0, end);
 }
+
+const snapshotOf = (record: FlowRecord): Snapshot => ({ ideas: record.ideas, columns: record.columns, format: record.format });
 
 export const useFlowStore = create<FlowState>()((set, get) => {
 	const update = (ideas: (ideas: Idea[]) => Idea[] | null, options: { structural?: boolean; history?: boolean } = {}) => {
@@ -76,7 +95,7 @@ export const useFlowStore = create<FlowState>()((set, get) => {
 		set({
 			record: { ...record, ideas: next, updatedAt: Date.now() },
 			rev: options.structural ? rev + 1 : rev,
-			...(history ? { past: [...past.slice(-HISTORY_LIMIT), record.ideas], future: [] } : {})
+			...(history ? { past: [...past.slice(-HISTORY_LIMIT), snapshotOf(record)], future: [] } : {})
 		});
 		return true;
 	};
@@ -204,23 +223,52 @@ export const useFlowStore = create<FlowState>()((set, get) => {
 		},
 
 		setFormat: formatId => {
-			const { record, rev } = get();
+			const { record, rev, past } = get();
 			if (!record || record.format === formatId) return;
 			const format = formatOf(formatId);
-			const used = record.ideas.reduce((max, idea) => Math.max(max, idea.col + 1), 0);
-			// Columns that already hold ideas survive a switch to a format with fewer speeches.
-			const columns = Array.from({ length: Math.max(format.speeches.length, used) }, (_, col) => format.speeches[col]?.label ?? record.columns[col] ?? `${col + 1}`);
+			const cross = record.columns.some(isCross) && !!format.crossEx;
+			// Speech and cross-ex columns take the new format's names; ideas follow by position.
+			const { columns } = arrangeColumns(format, speechColumns(format), cross, []);
+			// Columns that hold ideas but have no place in the new format stay, at the end.
+			const map = mapColumns(record.columns, columns);
+			record.columns.forEach((column, col) => {
+				if (map[col] < 0 && record.ideas.some(idea => idea.col === col)) map[col] = columns.push(column) - 1;
+			});
 			// Prep that isn't running restarts at the new format's length.
 			const fresh = (clock: Clock) => (clock.startedAt === null ? prepClock(format.prep) : clock);
-			set({ record: { ...record, format: format.id, columns, prep: { aff: fresh(record.prep.aff), neg: fresh(record.prep.neg) }, updatedAt: Date.now() }, rev: rev + 1 });
+			set({
+				record: { ...record, format: format.id, columns, ideas: remapIdeas(record.ideas, map), prep: { aff: fresh(record.prep.aff), neg: fresh(record.prep.neg) }, updatedAt: Date.now() },
+				rev: rev + 1,
+				past: [...past.slice(-HISTORY_LIMIT), snapshotOf(record)],
+				future: []
+			});
 		},
 
 		setColumnLabel: (col, label) => {
 			const { record } = get();
 			if (!record || col >= record.columns.length) return;
 			const columns = record.columns.slice();
-			columns[col] = label.trim() || formatOf(record.format).speeches[col]?.label || `${col + 1}`;
-			if (columns[col] !== record.columns[col]) set({ record: { ...record, columns, updatedAt: Date.now() } });
+			columns[col] = { ...columns[col], label: label.trim() || defaultLabel(formatOf(record.format), record.columns, col) };
+			if (columns[col].label !== record.columns[col].label) set({ record: { ...record, columns, updatedAt: Date.now() } });
+		},
+
+		setCrossEx: on => {
+			const { record, rev, past } = get();
+			if (!record) return;
+			const format = formatOf(record.format);
+			if (!format.crossEx || record.columns.some(isCross) === on) return;
+			const { columns, map } = arrangeColumns(
+				format,
+				record.columns.filter(column => !isCross(column)),
+				on,
+				record.columns
+			);
+			set({
+				record: { ...record, columns, ideas: remapIdeas(record.ideas, map), updatedAt: Date.now() },
+				rev: rev + 1,
+				past: [...past.slice(-HISTORY_LIMIT), snapshotOf(record)],
+				future: []
+			});
 		},
 
 		togglePrep: side => {
@@ -248,20 +296,30 @@ export const useFlowStore = create<FlowState>()((set, get) => {
 		undo: () => {
 			const { record, future, rev } = get();
 			if (!record) return false;
-			const past = trimNoops(get().past, record.ideas);
+			const past = trimNoops(get().past, snapshotOf(record));
 			const snapshot = past.at(-1);
 			if (!snapshot) return false;
-			set({ record: { ...record, ideas: mergeText(snapshot, record.ideas), updatedAt: Date.now() }, past: past.slice(0, -1), future: [...future, record.ideas], rev: rev + 1 });
+			set({
+				record: { ...record, ideas: mergeText(snapshot.ideas, record.ideas), columns: snapshot.columns, format: snapshot.format, updatedAt: Date.now() },
+				past: past.slice(0, -1),
+				future: [...future, snapshotOf(record)],
+				rev: rev + 1
+			});
 			return true;
 		},
 
 		redo: () => {
 			const { record, past, rev } = get();
 			if (!record) return false;
-			const future = trimNoops(get().future, record.ideas);
+			const future = trimNoops(get().future, snapshotOf(record));
 			const snapshot = future.at(-1);
 			if (!snapshot) return false;
-			set({ record: { ...record, ideas: mergeText(snapshot, record.ideas), updatedAt: Date.now() }, past: [...past, record.ideas], future: future.slice(0, -1), rev: rev + 1 });
+			set({
+				record: { ...record, ideas: mergeText(snapshot.ideas, record.ideas), columns: snapshot.columns, format: snapshot.format, updatedAt: Date.now() },
+				past: [...past, snapshotOf(record)],
+				future: future.slice(0, -1),
+				rev: rev + 1
+			});
 			return true;
 		}
 	};
