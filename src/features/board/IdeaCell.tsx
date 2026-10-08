@@ -3,10 +3,11 @@ import { animate, motion, type MotionValue } from "motion/react";
 import { memo, useLayoutEffect, useRef } from "react";
 import { shortcuts } from "../../app/shortcuts";
 import { Hint } from "../../components/Hint";
+import type { Side } from "../../lib/formats";
 import { renderMarkdown } from "../../lib/markdown";
-import { sideOf, type Idea } from "../../lib/record";
+import type { Idea } from "../../lib/record";
 import { getIdea } from "../../stores/flow";
-import { useUIStore, type Caret } from "../../stores/ui";
+import type { Caret } from "../../stores/ui";
 import prose from "../../styles/prose.module.css";
 import { SPRING, useBoard } from "./BoardContext";
 import { cellEditor } from "./cellEditor";
@@ -15,6 +16,7 @@ import { SIZES } from "./layout";
 
 interface IdeaCellProps {
 	idea: Idea;
+	side: Side;
 	depth: number;
 	y: number;
 	/** Present while this idea is being edited. */
@@ -25,31 +27,38 @@ interface IdeaCellProps {
 	enter: boolean;
 	canExtend: boolean;
 	dropTarget: boolean;
+	/** Being dragged to a new position: follows the pointer instead of the layout. */
+	lifted: boolean;
+	/** Pointer is over the idea or the gutter beside it. */
+	hover: boolean;
 }
 
 const GROW_FROM = { opacity: 0, scale: 0.98, clipPath: "inset(0% 0% 100% 0% round 0.5rem)" };
 const GROW_TO = { opacity: 1, scale: 1, clipPath: "inset(0% 0% 0% 0% round 0.5rem)", transitionEnd: { clipPath: "none" } };
+const LIFTED = { ...GROW_TO, scale: 1.02 };
 const SHRINK = { opacity: 0, scale: 0.97, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] as const } };
 
-function useGlide(value: MotionValue<number>, target: number, glide: boolean) {
+/** Moves a motion value to `target`, gliding on structural changes and jumping otherwise. Held values are left alone. */
+function useGlide(value: MotionValue<number>, target: number, glide: boolean, held = false) {
 	useLayoutEffect(() => {
-		if (value.get() === target) return;
+		if (held || value.get() === target) return;
 		if (glide || value.isAnimating()) animate(value, target, SPRING);
 		else {
 			value.stop();
 			value.set(target);
 		}
-		// Only the target drives this; `glide` is read at the moment the target changes.
-	}, [target]);
+		// `glide` is read at the moment the target changes or the value is released.
+	}, [target, held]);
 }
 
-export const IdeaCell = memo(function IdeaCell({ idea, depth, y, caret, glide, enter, canExtend, dropTarget }: IdeaCellProps) {
-	const { yOf, xOf, indent, observe, startLink } = useBoard();
+export const IdeaCell = memo(function IdeaCell({ idea, side, depth, y, caret, glide, enter, canExtend, dropTarget, lifted, hover }: IdeaCellProps) {
+	const { yOf, xOf, indent, observe, startLink, pressIdea } = useBoard();
 	const ref = useRef<HTMLDivElement>(null);
 	const yValue = yOf(idea.id, y);
 	const xValue = xOf(idea.id, depth);
 
-	useGlide(yValue, y, glide);
+	// A released idea glides from wherever the pointer left it.
+	useGlide(yValue, y, glide || !lifted, lifted);
 	useGlide(xValue, depth * indent, true);
 	useLayoutEffect(() => observe(ref.current!), [observe]);
 
@@ -57,10 +66,12 @@ export const IdeaCell = memo(function IdeaCell({ idea, depth, y, caret, glide, e
 		<motion.div
 			ref={ref}
 			data-idea-id={idea.id}
-			data-side={sideOf(idea.col)}
+			data-side={side}
 			data-color={idea.color ?? undefined}
 			data-editing={caret ? "" : undefined}
 			data-drop={dropTarget || undefined}
+			data-lifted={lifted || undefined}
+			data-hover={hover || undefined}
 			className={styles.cell}
 			style={{
 				y: yValue,
@@ -69,18 +80,17 @@ export const IdeaCell = memo(function IdeaCell({ idea, depth, y, caret, glide, e
 				width: `calc(var(--col-w) - ${SIZES.padLeft + SIZES.padRight + depth * SIZES.indent}rem)`
 			}}
 			initial={enter ? GROW_FROM : false}
-			animate={GROW_TO}
+			animate={lifted ? LIFTED : GROW_TO}
 			exit={SHRINK}
 			transition={SPRING}
 			onMouseDown={event => {
 				if (event.button !== 0) return;
-				if (caret) {
-					// Clicking the padding around the editor must not blur it.
-					if (!(event.target as Element).closest(".ProseMirror")) event.preventDefault();
-					return;
-				}
-				event.preventDefault();
-				useUIStore.getState().edit(idea.id, { at: "point", x: event.clientX, y: event.clientY });
+				// Keep focus where it is: clicking the editor's padding must not blur it, and a press on
+				// another idea becomes either an edit or a drag once the pointer is released or moves.
+				if (!caret || !(event.target as Element).closest(".ProseMirror")) event.preventDefault();
+			}}
+			onPointerDown={event => {
+				if (!caret) pressIdea(idea.id, event);
 			}}
 		>
 			{caret ? <EditorSlot id={idea.id} caret={caret} /> : <div className={prose.prose} dangerouslySetInnerHTML={{ __html: renderMarkdown(idea.text) }} />}

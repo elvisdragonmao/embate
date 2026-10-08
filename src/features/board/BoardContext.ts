@@ -11,6 +11,8 @@ export interface BoardContextValue {
 	indent: number;
 	observe: (element: Element) => () => void;
 	startLink: (id: string, event: PointerEvent) => void;
+	/** Press on an idea: a click edits it, a drag reorders it. */
+	pressIdea: (id: string, event: PointerEvent) => void;
 }
 
 export const BoardContext = createContext<BoardContextValue | null>(null);

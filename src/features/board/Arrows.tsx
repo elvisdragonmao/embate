@@ -1,6 +1,7 @@
 import { motion, useTransform } from "motion/react";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import type { Idea, IdeaColor } from "../../lib/record";
+import { useFlowStore } from "../../stores/flow";
 import styles from "./Arrows.module.css";
 import { useBoard } from "./BoardContext";
 import type { Layout, Metrics } from "./layout";
@@ -90,11 +91,35 @@ const Arrow = memo(function Arrow({ fromId, toId, fromCol, toCol, fromY, toY, to
 	const targetX = xOf(toId, toDepth);
 	const { column, padLeft, padRight, anchor, rem } = metrics;
 
-	const d = useTransform([sourceY, targetY, targetX], ([sy, ty, tx]: number[]) =>
-		arrowPath((fromCol + 1) * column - padRight + 0.25 * rem, sy + anchor, toCol * column + padLeft + tx - 0.0625 * rem, ty + anchor, rem)
-	);
+	const [hover, setHover] = useState(false);
+	const sx = (fromCol + 1) * column - padRight + 0.25 * rem;
+	const targetLeft = toCol * column + padLeft - 0.0625 * rem;
+	const d = useTransform([sourceY, targetY, targetX], ([sy, ty, tx]: number[]) => arrowPath(sx, sy + anchor, targetLeft + tx, ty + anchor, rem));
+	// The curve is symmetric, so its midpoint is the midpoint of its ends.
+	const midX = useTransform(targetX, tx => (sx + targetLeft + tx) / 2);
+	const midY = useTransform([sourceY, targetY], ([sy, ty]: number[]) => (sy + ty) / 2 + anchor);
 
-	return <motion.path d={d} className={styles.arrow} data-active={active || undefined} data-color={color ?? undefined} />;
+	return (
+		<g>
+			<motion.path d={d} className={styles.arrow} data-active={active || undefined} data-color={color ?? undefined} data-removing={hover || undefined} />
+			<motion.path
+				d={d}
+				className={styles.hit}
+				onPointerEnter={() => setHover(true)}
+				onPointerLeave={() => setHover(false)}
+				onMouseDown={event => event.preventDefault()}
+				onClick={() => useFlowStore.getState().unlink(toId)}
+			>
+				<title>Remove link</title>
+			</motion.path>
+			{hover && (
+				<motion.g style={{ x: midX, y: midY }} className={styles.badge}>
+					<circle r={0.5625 * rem} />
+					<path d={`M ${-0.1875 * rem} ${-0.1875 * rem} L ${0.1875 * rem} ${0.1875 * rem} M ${0.1875 * rem} ${-0.1875 * rem} L ${-0.1875 * rem} ${0.1875 * rem}`} />
+				</motion.g>
+			)}
+		</g>
+	);
 });
 
 /** The arrow that follows the pointer while dragging a link. */

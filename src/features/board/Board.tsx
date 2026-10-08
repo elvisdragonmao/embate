@@ -1,47 +1,46 @@
 import { AnimatePresence, motionValue, type MotionValue } from "motion/react";
-import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from "react";
 import { flushSync } from "react-dom";
-import { sideOf, SPEECHES, type Idea } from "../../lib/record";
+import { formatOf, sideAt } from "../../lib/formats";
+import type { Idea } from "../../lib/record";
 import { columnOrder } from "../../lib/tree";
-import { lastColumn, useFlowStore } from "../../stores/flow";
+import { useFlowStore } from "../../stores/flow";
 import { useUIStore } from "../../stores/ui";
 import { Arrows, DragArrow } from "./Arrows";
 import styles from "./Board.module.css";
-import { boardState, extendIdea } from "./boardApi";
+import { boardState } from "./boardApi";
 import { BoardContext, type BoardContextValue } from "./BoardContext";
 import "./cellKeys";
+import { ColumnLabel } from "./ColumnLabel";
 import { IdeaCell } from "./IdeaCell";
 import { IdeaMenu } from "./IdeaMenu";
-import { COLUMN_COUNT, computeLayout, insertionAt, SIZES, toMetrics } from "./layout";
+import { computeLayout, insertionAt, SIZES, toMetrics } from "./layout";
+import { useColumnZoom } from "./useColumnZoom";
+import { useLinkDrag } from "./useLinkDrag";
+import { useReorder, type ReorderLive } from "./useReorder";
 
-const EMPTY: Idea[] = [];
+const EMPTY_IDEAS: Idea[] = [];
+const EMPTY_COLUMNS: string[] = [];
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const rootFontSize = () => parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 
-type DropTarget = { kind: "idea"; id: string } | { kind: "col"; col: number };
-
-interface Drag {
-	sourceId: string;
-	x: number;
-	y: number;
-	target: DropTarget | null;
-}
-
 export function Board() {
-	const ideas = useFlowStore(state => state.record?.ideas ?? EMPTY);
+	const ideas = useFlowStore(state => state.record?.ideas ?? EMPTY_IDEAS);
+	const labels = useFlowStore(state => state.record?.columns ?? EMPTY_COLUMNS);
+	const format = formatOf(useFlowStore(state => state.record?.format));
 	const rev = useFlowStore(state => state.rev);
 	const editing = useUIStore(state => state.editing);
 	const columnWidth = useUIStore(state => state.columnWidth);
+	const columns = labels.length;
 
 	const scrollerRef = useRef<HTMLDivElement>(null);
 	const bodyRef = useRef<HTMLDivElement>(null);
 	const [viewport, setViewport] = useState({ width: 0, height: 0 });
 	const [rem] = useState(rootFontSize);
 	const [hovered, setHovered] = useState<string | null>(null);
-	const [drag, setDrag] = useState<Drag | null>(null);
 
-	// Columns fit the viewport until the user pinches to a width of their own.
-	const fitRem = Math.max(SIZES.fitMin, viewport.width / rem / COLUMN_COUNT);
+	// Every visit starts with the columns filling the board; pinching picks a width of its own.
+	const fitRem = viewport.width / rem / Math.max(columns, 1);
 	const columnRem = clamp(columnWidth ?? fitRem, SIZES.minColumn, SIZES.maxColumn);
 	const metrics = useMemo(() => toMetrics(columnRem, rem), [columnRem, rem]);
 
@@ -66,28 +65,21 @@ export function Board() {
 	);
 	useEffect(() => () => resizeObserver.disconnect(), [resizeObserver]);
 
-	const layout = useMemo(() => computeLayout(ideas, heights.current, metrics), [ideas, heightsVersion, metrics]);
-	useLayoutEffect(() => {
-		boardState.layout = layout;
-	});
-
-	// Ideas glide only when the structure changed; typing and zooming move them instantly.
-	const seenRev = useRef(rev);
-	const glide = seenRev.current !== rev;
-	useLayoutEffect(() => {
-		seenRev.current = rev;
-	});
-
-	// Ideas that exist when the board opens appear in place; later ones grow in.
-	const ready = useRef(false);
-	useEffect(() => {
-		ready.current = true;
-	}, []);
-
 	// Shared motion values let arrows follow ideas mid-animation.
 	const ys = useRef(new Map<string, MotionValue<number>>());
 	const xs = useRef(new Map<string, MotionValue<number>>());
 	const indent = SIZES.indent * rem;
+
+	const { linkDrag, startLink } = useLinkDrag(bodyRef);
+	const live = useRef<ReorderLive>(null!);
+	const { moving, pressIdea } = useReorder(bodyRef, scrollerRef, live);
+
+	const shown = moving?.preview ?? ideas;
+	const layout = useMemo(() => computeLayout(shown, heights.current, metrics, columns), [shown, heightsVersion, metrics, columns]);
+	useLayoutEffect(() => {
+		boardState.layout = layout;
+	});
+
 	const context = useMemo<BoardContextValue>(() => {
 		const valueOf = (map: Map<string, MotionValue<number>>, id: string, initial: number) => {
 			let value = map.get(id);
@@ -110,63 +102,36 @@ export function Board() {
 					}
 				};
 			},
-			startLink: (id, event) => startLinkRef.current(id, event)
+			startLink,
+			pressIdea
 		};
-	}, [indent, resizeObserver]);
+	}, [indent, resizeObserver, startLink, pressIdea]);
+	live.current = { layout, metrics, columns, heights: heights.current, yOf: context.yOf };
+
+	// Ideas glide when the structure changes or a drag rearranges them; typing and zooming move them instantly.
+	const seen = useRef({ rev, shown });
+	const glide = seen.current.rev !== rev || seen.current.shown !== shown;
+	useLayoutEffect(() => {
+		seen.current = { rev, shown };
+	});
+
+	// Ideas that exist when the board opens appear in place; later ones grow in.
+	const ready = useRef(false);
+	useEffect(() => {
+		ready.current = true;
+	}, []);
 
 	// Viewport size drives the fitted column width and the minimum canvas height.
 	useLayoutEffect(() => {
 		const scroller = scrollerRef.current!;
-		const observer = new ResizeObserver(() => setViewport({ width: scroller.clientWidth, height: scroller.clientHeight }));
+		const measure = () => setViewport({ width: scroller.clientWidth, height: scroller.clientHeight });
+		measure();
+		const observer = new ResizeObserver(measure);
 		observer.observe(scroller);
 		return () => observer.disconnect();
 	}, []);
 
-	// Pinch (ctrl + wheel, or Safari gestures) changes column width around the pointer.
-	const columnRemRef = useRef(columnRem);
-	columnRemRef.current = columnRem;
-	useEffect(() => {
-		const scroller = scrollerRef.current!;
-		const zoomTo = (next: number, clientX: number) => {
-			const current = columnRemRef.current;
-			const target = clamp(next, SIZES.minColumn, SIZES.maxColumn);
-			if (Math.abs(target - current) < 0.001) return;
-			const offset = clientX - scroller.getBoundingClientRect().left;
-			const ratio = (scroller.scrollLeft + offset) / (current * COLUMN_COUNT * rem);
-			flushSync(() => useUIStore.getState().setColumnWidth(target));
-			scroller.scrollLeft = ratio * target * COLUMN_COUNT * rem - offset;
-		};
-		const onWheel = (event: WheelEvent) => {
-			if (!event.ctrlKey) return;
-			event.preventDefault();
-			const delta = clamp(event.deltaY, -30, 30);
-			zoomTo(columnRemRef.current * Math.exp(-delta * 0.01), event.clientX);
-		};
-		let gestureBase = columnRemRef.current;
-		const onGestureStart = (event: Event) => {
-			event.preventDefault();
-			gestureBase = columnRemRef.current;
-		};
-		const onGestureChange = (event: Event) => {
-			event.preventDefault();
-			const gesture = event as Event & { scale: number; clientX: number };
-			zoomTo(gestureBase * gesture.scale, gesture.clientX);
-		};
-		// Pinching anywhere else would zoom the whole page instead.
-		const blockPageZoom = (event: WheelEvent) => {
-			if (event.ctrlKey) event.preventDefault();
-		};
-		window.addEventListener("wheel", blockPageZoom, { passive: false });
-		scroller.addEventListener("wheel", onWheel, { passive: false });
-		scroller.addEventListener("gesturestart", onGestureStart);
-		scroller.addEventListener("gesturechange", onGestureChange);
-		return () => {
-			window.removeEventListener("wheel", blockPageZoom);
-			scroller.removeEventListener("wheel", onWheel);
-			scroller.removeEventListener("gesturestart", onGestureStart);
-			scroller.removeEventListener("gesturechange", onGestureChange);
-		};
-	}, [rem]);
+	useColumnZoom(scrollerRef, columnRem, fitRem, columns, rem);
 
 	// Keep the idea being edited in view, using its final position rather than a mid-animation one.
 	useEffect(() => {
@@ -188,63 +153,20 @@ export function Board() {
 		if (scrollTop !== scroller.scrollTop || scrollLeft !== scroller.scrollLeft) scroller.scrollTo({ top: Math.max(0, scrollTop), left: Math.max(0, scrollLeft), behavior: "smooth" });
 	}, [editing?.id]);
 
-	// Drag the extend handle onto a later speech or idea to link there; a plain click extends into the next speech.
-	const startLinkRef = useRef<(id: string, event: ReactPointerEvent) => void>(() => {});
-	startLinkRef.current = (sourceId, event) => {
-		if (event.button !== 0) return;
-		event.preventDefault();
-		event.stopPropagation();
-		const source = useFlowStore.getState().record?.ideas.find(idea => idea.id === sourceId);
-		if (!source) return;
-		const start = { x: event.clientX, y: event.clientY };
-		let dragging = false;
-
-		const hitTest = (x: number, y: number): DropTarget | null => {
-			for (const element of document.elementsFromPoint(x, y)) {
-				const idea = element.closest<HTMLElement>("[data-idea-id]");
-				if (idea) {
-					const id = idea.dataset.ideaId!;
-					const target = useFlowStore.getState().record?.ideas.find(item => item.id === id);
-					return target && target.col > source.col ? { kind: "idea", id } : null;
-				}
-				const column = element.closest<HTMLElement>("[data-col]");
-				if (column) {
-					const col = Number(column.dataset.col);
-					return col > source.col ? { kind: "col", col } : null;
-				}
-			}
-			return null;
-		};
-
-		const onMove = (move: PointerEvent) => {
-			if (!dragging && Math.hypot(move.clientX - start.x, move.clientY - start.y) < 4) return;
-			dragging = true;
-			const body = bodyRef.current!.getBoundingClientRect();
-			setDrag({ sourceId, x: move.clientX - body.left, y: move.clientY - body.top, target: hitTest(move.clientX, move.clientY) });
-		};
-		const finish = (up: PointerEvent | null) => {
-			window.removeEventListener("pointermove", onMove);
-			window.removeEventListener("pointerup", finish);
-			window.removeEventListener("pointercancel", cancel);
-			setDrag(null);
-			if (!up) return;
-			const ui = useUIStore.getState();
-			if (!dragging) {
-				const created = extendIdea(sourceId);
-				if (created) ui.edit(created, { at: "start" });
-				return;
-			}
-			const target = hitTest(up.clientX, up.clientY);
-			if (target?.kind === "idea") useFlowStore.getState().link(target.id, sourceId);
-			else if (target?.kind === "col") {
-				const created = extendIdea(sourceId, target.col);
-				if (created) ui.edit(created, { at: "start" });
-			}
-		};
-		const cancel = () => finish(null);
-		window.addEventListener("pointermove", onMove);
-		window.addEventListener("pointerup", finish);
-		window.addEventListener("pointercancel", cancel);
+	// An idea counts as hovered from the gutter on its right too, where its extend handle sits, but an arrow
+	// running through that gutter wins so it stays clickable.
+	const hoverTarget = (target: Element, clientX: number, clientY: number) => {
+		const idea = target.closest<HTMLElement>("[data-idea-id]");
+		if (idea) return idea.dataset.ideaId!;
+		const column = target.closest<HTMLElement>("[data-col]");
+		if (!column) return null;
+		const col = Number(column.dataset.col);
+		const body = bodyRef.current!.getBoundingClientRect();
+		const x = clientX - body.left - col * metrics.column;
+		const y = clientY - body.top;
+		if (x < metrics.column - metrics.padRight) return null;
+		for (const [id, placement] of layout.placements) if (placement.col === col && y >= placement.y && y <= placement.y + placement.height) return id;
+		return null;
 	};
 
 	const addAt = (col: number, clientY: number) => {
@@ -256,28 +178,28 @@ export function Board() {
 
 	const header = SIZES.header * rem;
 	const bodyHeight = Math.max(layout.height + SIZES.tail * rem, viewport.height - header);
-	const dragSource = drag ? layout.placements.get(drag.sourceId) : undefined;
+	const linkSource = linkDrag ? layout.placements.get(linkDrag.sourceId) : undefined;
+	const sides = useMemo(() => labels.map((_, col) => sideAt(format, col)), [labels, format]);
 
 	const style = {
 		"--col-w": `${columnRem}rem`,
 		"--header-h": `${SIZES.header}rem`,
 		"--pad-left": `${SIZES.padLeft}rem`,
+		"--pad-right": `${SIZES.padRight}rem`,
 		"--cell-pad-y": `${SIZES.cellPadY}rem`,
 		"--cell-pad-x": `${SIZES.cellPadX}rem`,
 		"--cell-font": `${SIZES.font}rem`,
 		"--cell-line": SIZES.line,
-		width: `${columnRem * COLUMN_COUNT}rem`
+		width: `${columnRem * columns}rem`
 	} as CSSProperties;
 
 	return (
 		<BoardContext.Provider value={context}>
 			<IdeaMenu triggerRef={scrollerRef} render={<div className={styles.scroller} />}>
-				<div className={styles.canvas} style={style} data-dragging={drag ? "" : undefined}>
-					<header className={styles.header} onDoubleClick={() => useUIStore.getState().setColumnWidth(null)}>
-						{SPEECHES.map((speech, col) => (
-							<div key={speech} className={styles.label} data-side={sideOf(col)}>
-								{speech}
-							</div>
+				<div className={styles.canvas} style={style} data-dragging={linkDrag || moving ? "" : undefined}>
+					<header className={styles.header}>
+						{labels.map((label, col) => (
+							<ColumnLabel key={col} col={col} label={label} side={sides[col]} />
 						))}
 					</header>
 
@@ -285,19 +207,19 @@ export function Board() {
 						ref={bodyRef}
 						className={styles.body}
 						style={{ height: `${bodyHeight / rem}rem` }}
-						onPointerOver={event => {
-							const id = (event.target as Element).closest<HTMLElement>("[data-idea-id]")?.dataset.ideaId ?? null;
+						onPointerMove={event => {
+							const id = hoverTarget(event.target as Element, event.clientX, event.clientY);
 							if (id !== hovered) setHovered(id);
 						}}
 						onPointerLeave={() => setHovered(null)}
 					>
-						{SPEECHES.map((speech, col) => (
+						{labels.map((_, col) => (
 							<div
-								key={speech}
+								key={col}
 								className={styles.column}
 								data-col={col}
-								data-side={sideOf(col)}
-								data-drop={drag?.target?.kind === "col" && drag.target.col === col ? "" : undefined}
+								data-side={sides[col]}
+								data-drop={linkDrag?.target?.kind === "col" && linkDrag.target.col === col ? "" : undefined}
 								style={{ left: `calc(${col} * var(--col-w))` }}
 								onMouseDown={event => {
 									if (event.button !== 0 || event.target !== event.currentTarget) return;
@@ -307,30 +229,35 @@ export function Board() {
 							/>
 						))}
 
-						<Arrows ideas={ideas} layout={layout} metrics={metrics} focus={drag?.sourceId ?? hovered ?? editing?.id ?? null} />
+						<Arrows ideas={shown} layout={layout} metrics={metrics} focus={linkDrag?.sourceId ?? moving?.id ?? hovered ?? editing?.id ?? null} />
 
 						<AnimatePresence>
-							{SPEECHES.flatMap((_, col) =>
-								columnOrder(ideas, col).map(({ idea }) => {
+							{labels.flatMap((_, col) =>
+								columnOrder(shown, col).map(({ idea }) => {
 									const placement = layout.placements.get(idea.id)!;
 									return (
 										<IdeaCell
 											key={idea.id}
 											idea={idea}
+											side={sides[col]}
 											depth={placement.depth}
 											y={placement.y}
 											caret={editing?.id === idea.id ? editing.caret : null}
 											glide={glide}
 											enter={ready.current}
-											canExtend={idea.col < lastColumn}
-											dropTarget={drag?.target?.kind === "idea" && drag.target.id === idea.id}
+											canExtend={col < columns - 1}
+											dropTarget={linkDrag?.target?.kind === "idea" && linkDrag.target.id === idea.id}
+											lifted={moving?.ids.has(idea.id) ?? false}
+											hover={hovered === idea.id}
 										/>
 									);
 								})
 							)}
 						</AnimatePresence>
 
-						{drag && dragSource && <DragArrow sx={(dragSource.col + 1) * metrics.column - metrics.padRight + 0.25 * rem} sy={dragSource.y + metrics.anchor} tx={drag.x} ty={drag.y} rem={rem} />}
+						{linkDrag && linkSource && (
+							<DragArrow sx={(linkSource.col + 1) * metrics.column - metrics.padRight + 0.25 * rem} sy={linkSource.y + metrics.anchor} tx={linkDrag.x} ty={linkDrag.y} rem={rem} />
+						)}
 					</div>
 				</div>
 			</IdeaMenu>

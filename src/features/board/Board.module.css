@@ -34,17 +34,49 @@
 	align-items: center;
 	flex: none;
 	width: var(--col-w);
-	padding-left: calc(var(--pad-left) + var(--cell-pad-x));
+	min-width: 0;
+	padding-left: calc(var(--pad-left) + var(--cell-pad-x) - 0.375rem);
+	padding-right: var(--pad-right);
 	background: var(--aff-bg);
-	font-size: 0.8125rem;
-	font-weight: 600;
-	letter-spacing: 0.02em;
 	color: var(--aff);
 }
 
 .label[data-side="neg"] {
 	background: var(--neg-bg);
 	color: var(--neg);
+}
+
+.labelText {
+	max-width: 100%;
+	min-width: 0;
+	height: 1.75rem;
+	margin: 0;
+	padding: 0 0.375rem;
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: inherit;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: text;
+	transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.labelText:hover {
+	background: var(--hover);
+}
+
+input.labelText {
+	width: auto;
+	outline: none;
+	box-shadow: none;
+	background: var(--hover);
+	caret-color: currentColor;
 }
 
 .body {

@@ -59,6 +59,35 @@
 	opacity: 1;
 }
 
+.arrow[data-removing] {
+	stroke: var(--ctp-red);
+	stroke-width: 1.75px;
+	opacity: 1;
+}
+
+.hit {
+	fill: none;
+	stroke: transparent;
+	stroke-width: 0.875rem;
+	pointer-events: stroke;
+	cursor: pointer;
+}
+
+.badge {
+	pointer-events: none;
+}
+
+.badge circle {
+	fill: var(--ctp-red);
+}
+
+.badge path {
+	fill: none;
+	stroke: var(--ctp-base);
+	stroke-width: 1.75px;
+	stroke-linecap: round;
+}
+
 .drag {
 	stroke: var(--accent);
 	stroke-width: 1.75px;

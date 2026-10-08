@@ -1,4 +1,4 @@
-import { SPEECHES, type Idea } from "../../lib/record";
+import type { Idea } from "../../lib/record";
 import { columnOrder } from "../../lib/tree";
 
 /** Layout constants in rem; also exposed to CSS as custom properties. */
@@ -6,7 +6,7 @@ export const SIZES = {
 	header: 2.75,
 	top: 0.5,
 	padLeft: 0.5,
-	padRight: 1.25,
+	padRight: 1.75,
 	indent: 1.125,
 	gap: 0.25,
 	groupGap: 0.75,
@@ -14,13 +14,10 @@ export const SIZES = {
 	cellPadX: 0.5,
 	font: 0.875,
 	line: 1.5,
-	fitMin: 8.5,
-	minColumn: 7,
+	minColumn: 6,
 	maxColumn: 40,
 	tail: 16
 };
-
-export const COLUMN_COUNT = SPEECHES.length;
 
 export interface Metrics {
 	rem: number;
@@ -71,10 +68,10 @@ export interface Layout {
  * Stacks each column's ideas in reading order. An idea that extends an earlier one
  * is pushed down to line up with its source, like writing a response next to the argument on paper.
  */
-export function computeLayout(ideas: Idea[], heights: Map<string, number>, metrics: Metrics): Layout {
+export function computeLayout(ideas: Idea[], heights: Map<string, number>, metrics: Metrics, columns: number): Layout {
 	const placements = new Map<string, Placement>();
 	let height = 0;
-	for (let col = 0; col < COLUMN_COUNT; col++) {
+	for (let col = 0; col < columns; col++) {
 		let cursor = metrics.top;
 		let first = true;
 		for (const { idea, depth } of columnOrder(ideas, col)) {
