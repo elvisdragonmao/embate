@@ -1,5 +1,9 @@
 # embate
 
+[debate.emtech.cc](https://debate.emtech.cc)
+
+![embate showing the demo Public Forum round in dark mode](.github/screenshot.webp)
+
 A flowing tool for debate judges. The sidebar holds the round's title, format, speech timer, prep clocks and notes; the board lays out one column per speech so you can write down arguments as you hear them and draw an arrow from each response to the argument it answers.
 
 Formats: Public Forum, Lincoln–Douglas, Policy, British Parliamentary, World Schools, Asian Parliamentary and 新式奧瑞岡 (Oregon-Oxford). Switching format swaps in that format's speeches, quick timers and prep time.
@@ -30,7 +34,12 @@ pnpm format       # Prettier
 
 Built with React, React Router, Zustand, TanStack Query, Milkdown, Base UI, Motion and Phosphor Icons. Colors follow Catppuccin (Latte and Mocha, matching the system theme), and styles are CSS Modules.
 
-`wrangler.jsonc` serves `dist/` as Cloudflare Workers static assets with a single-page-app fallback.
+`wrangler.jsonc` serves `dist/` as Cloudflare Workers static assets with a single-page-app fallback on the custom domain `debate.emtech.cc`. To deploy:
+
+```sh
+pnpm build
+npx wrangler deploy
+```
 
 ## License
 
