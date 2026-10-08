@@ -1,0 +1,222 @@
+import { create } from "zustand";
+import { createId } from "../lib/id";
+import { SPEECHES, type FlowRecord, type Idea, type IdeaColor } from "../lib/record";
+import { saveRecord, setLastId } from "../lib/storage";
+import { childrenOf, descendantIds } from "../lib/tree";
+
+export interface AddIdeaInput {
+	col: number;
+	parent?: string | null;
+	from?: string | null;
+	text?: string;
+	/** Insert right after this idea; otherwise right before `before`; otherwise at the end. */
+	after?: string;
+	before?: string;
+}
+
+interface FlowState {
+	record: FlowRecord | null;
+	/** Bumped on structural changes (not text) so the board knows when to animate layout. */
+	rev: number;
+	past: Idea[][];
+	future: Idea[][];
+	load: (record: FlowRecord) => void;
+	setTitle: (title: string) => void;
+	/** `id` guards against late writes from an editor of a record that was just closed. */
+	setNote: (id: string, note: string) => void;
+	addIdea: (input: AddIdeaInput) => string;
+	setText: (id: string, text: string) => void;
+	setColor: (id: string, color: IdeaColor | null) => void;
+	link: (id: string, from: string) => void;
+	unlink: (id: string) => void;
+	indent: (id: string) => boolean;
+	outdent: (id: string) => boolean;
+	remove: (id: string, options?: { history?: boolean }) => void;
+	undo: () => boolean;
+	redo: () => boolean;
+}
+
+const HISTORY_LIMIT = 200;
+
+/** Restores structure from a snapshot while keeping the latest text of ideas that still exist. */
+function mergeText(snapshot: Idea[], current: Idea[]) {
+	const latest = new Map(current.map(idea => [idea.id, idea.text]));
+	return snapshot.map(idea => {
+		const text = latest.get(idea.id);
+		return text === undefined || text === idea.text ? idea : { ...idea, text };
+	});
+}
+
+export const useFlowStore = create<FlowState>()((set, get) => {
+	const update = (ideas: (ideas: Idea[]) => Idea[] | null, options: { structural?: boolean; history?: boolean } = {}) => {
+		const { record, rev, past } = get();
+		if (!record) return false;
+		const next = ideas(record.ideas);
+		if (!next) return false;
+		const history = options.history ?? options.structural;
+		set({
+			record: { ...record, ideas: next, updatedAt: Date.now() },
+			rev: options.structural ? rev + 1 : rev,
+			...(history ? { past: [...past.slice(-HISTORY_LIMIT), record.ideas], future: [] } : {})
+		});
+		return true;
+	};
+
+	const patch = (id: string, change: Partial<Idea>, options?: { structural?: boolean; history?: boolean }) =>
+		update(ideas => {
+			const index = ideas.findIndex(idea => idea.id === id);
+			if (index < 0) return null;
+			const next = ideas.slice();
+			next[index] = { ...ideas[index], ...change };
+			return next;
+		}, options);
+
+	return {
+		record: null,
+		rev: 0,
+		past: [],
+		future: [],
+
+		load: record => {
+			flushSave();
+			setLastId(record.id);
+			set({ record, rev: get().rev + 1, past: [], future: [] });
+		},
+
+		setTitle: title => {
+			const { record } = get();
+			if (record) set({ record: { ...record, title, updatedAt: Date.now() } });
+		},
+
+		setNote: (id, note) => {
+			const { record } = get();
+			if (record?.id === id && record.note !== note) set({ record: { ...record, note, updatedAt: Date.now() } });
+		},
+
+		addIdea: input => {
+			const id = createId();
+			const idea: Idea = { id, col: input.col, parent: input.parent ?? null, from: input.from ?? null, text: input.text ?? "", color: null };
+			update(
+				ideas => {
+					const next = ideas.slice();
+					const afterIndex = input.after ? next.findIndex(item => item.id === input.after) : -1;
+					const beforeIndex = input.before ? next.findIndex(item => item.id === input.before) : -1;
+					if (afterIndex >= 0) next.splice(afterIndex + 1, 0, idea);
+					else if (beforeIndex >= 0) next.splice(beforeIndex, 0, idea);
+					else next.push(idea);
+					return next;
+				},
+				{ structural: true }
+			);
+			return id;
+		},
+
+		setText: (id, text) => {
+			const idea = get().record?.ideas.find(item => item.id === id);
+			if (idea && idea.text !== text) patch(id, { text });
+		},
+
+		setColor: (id, color) => {
+			patch(id, { color }, { history: true });
+		},
+
+		link: (id, from) => {
+			const ideas = get().record?.ideas ?? [];
+			const target = ideas.find(idea => idea.id === id);
+			const source = ideas.find(idea => idea.id === from);
+			if (!target || !source || source.col >= target.col) return;
+			patch(id, { from }, { structural: true });
+		},
+
+		unlink: id => {
+			patch(id, { from: null }, { structural: true });
+		},
+
+		indent: id =>
+			update(
+				ideas => {
+					const idea = ideas.find(item => item.id === id);
+					if (!idea) return null;
+					const siblings = childrenOf(ideas, idea.col, idea.parent);
+					const previous = siblings[siblings.findIndex(item => item.id === id) - 1];
+					if (!previous) return null;
+					// Becomes the last child of the previous sibling.
+					const next = ideas.filter(item => item.id !== id);
+					next.push({ ...idea, parent: previous.id });
+					return next;
+				},
+				{ structural: true }
+			),
+
+		outdent: id =>
+			update(
+				ideas => {
+					const idea = ideas.find(item => item.id === id);
+					if (!idea?.parent) return null;
+					const parent = ideas.find(item => item.id === idea.parent);
+					if (!parent) return null;
+					// Becomes the sibling right after its former parent.
+					const next = ideas.filter(item => item.id !== id);
+					next.splice(next.indexOf(parent) + 1, 0, { ...idea, parent: parent.parent });
+					return next;
+				},
+				{ structural: true }
+			),
+
+		remove: (id, options) => {
+			update(
+				ideas => {
+					if (!ideas.some(idea => idea.id === id)) return null;
+					const removed = descendantIds(ideas, id);
+					return ideas.filter(idea => !removed.has(idea.id)).map(idea => (idea.from && removed.has(idea.from) ? { ...idea, from: null } : idea));
+				},
+				{ structural: true, history: options?.history ?? true }
+			);
+		},
+
+		undo: () => {
+			const { record, past, future, rev } = get();
+			const snapshot = past.at(-1);
+			if (!record || !snapshot) return false;
+			set({ record: { ...record, ideas: mergeText(snapshot, record.ideas), updatedAt: Date.now() }, past: past.slice(0, -1), future: [...future, record.ideas], rev: rev + 1 });
+			return true;
+		},
+
+		redo: () => {
+			const { record, past, future, rev } = get();
+			const snapshot = future.at(-1);
+			if (!record || !snapshot) return false;
+			set({ record: { ...record, ideas: mergeText(snapshot, record.ideas), updatedAt: Date.now() }, past: [...past, record.ideas], future: future.slice(0, -1), rev: rev + 1 });
+			return true;
+		}
+	};
+});
+
+export const getIdea = (id: string) => useFlowStore.getState().record?.ideas.find(idea => idea.id === id);
+
+export const lastColumn = SPEECHES.length - 1;
+
+// Autosave: debounce writes, flush when the page is hidden.
+let pending: FlowRecord | null = null;
+let timer: ReturnType<typeof setTimeout> | undefined;
+
+export function flushSave() {
+	clearTimeout(timer);
+	if (pending) saveRecord(pending);
+	pending = null;
+}
+
+useFlowStore.subscribe((state, previous) => {
+	if (!state.record || state.record === previous.record) return;
+	if (previous.record?.id === state.record.id && previous.record.updatedAt === state.record.updatedAt) return;
+	pending = state.record;
+	clearTimeout(timer);
+	timer = setTimeout(flushSave, 400);
+});
+
+if (typeof window !== "undefined") {
+	window.addEventListener("pagehide", flushSave);
+	document.addEventListener("visibilitychange", () => {
+		if (document.visibilityState === "hidden") flushSave();
+	});
+}
