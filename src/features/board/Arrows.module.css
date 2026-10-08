@@ -1,0 +1,65 @@
+.arrows,
+.overlay {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	pointer-events: none;
+}
+
+.arrows {
+	z-index: 1;
+}
+
+.overlay {
+	z-index: 4;
+}
+
+.arrow,
+.drag {
+	fill: none;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.arrow {
+	--arrow: var(--ctp-overlay0);
+	stroke: var(--arrow);
+	stroke-width: 1.25px;
+	opacity: 0.75;
+	transition:
+		stroke var(--dur) var(--ease-out),
+		stroke-width var(--dur) var(--ease-out),
+		opacity var(--dur) var(--ease-out);
+}
+
+.arrow[data-color="red"] {
+	--arrow: var(--ctp-red);
+}
+.arrow[data-color="peach"] {
+	--arrow: var(--ctp-peach);
+}
+.arrow[data-color="yellow"] {
+	--arrow: var(--ctp-yellow);
+}
+.arrow[data-color="green"] {
+	--arrow: var(--ctp-green);
+}
+.arrow[data-color="blue"] {
+	--arrow: var(--ctp-blue);
+}
+.arrow[data-color="mauve"] {
+	--arrow: var(--ctp-mauve);
+}
+
+.arrow[data-active] {
+	stroke: color-mix(in oklch, var(--arrow) 30%, var(--accent));
+	stroke-width: 1.75px;
+	opacity: 1;
+}
+
+.drag {
+	stroke: var(--accent);
+	stroke-width: 1.75px;
+}

@@ -1,0 +1,74 @@
+.scroller {
+	position: relative;
+	height: 100dvh;
+	overflow: auto;
+	overscroll-behavior: none;
+	background: var(--bg);
+	scrollbar-width: thin;
+	scrollbar-color: var(--ctp-surface1) transparent;
+}
+
+.canvas {
+	--neg-bg: color-mix(in oklch, var(--ctp-mantle) 45%, var(--ctp-base));
+	--aff-bg: var(--ctp-base);
+	position: relative;
+	min-height: 100%;
+}
+
+.canvas[data-dragging] {
+	cursor: grabbing;
+	user-select: none;
+}
+
+.header {
+	position: sticky;
+	top: 0;
+	z-index: 5;
+	display: flex;
+	height: var(--header-h);
+	user-select: none;
+}
+
+.label {
+	display: flex;
+	align-items: center;
+	flex: none;
+	width: var(--col-w);
+	padding-left: calc(var(--pad-left) + var(--cell-pad-x));
+	background: var(--aff-bg);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	color: var(--aff);
+}
+
+.label[data-side="neg"] {
+	background: var(--neg-bg);
+	color: var(--neg);
+}
+
+.body {
+	position: relative;
+}
+
+.column {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: var(--col-w);
+	background: var(--aff-bg);
+	cursor: text;
+	transition: background-color var(--dur) var(--ease-out);
+}
+
+.column[data-side="neg"] {
+	background: var(--neg-bg);
+}
+
+.column[data-drop] {
+	background: color-mix(in oklch, var(--accent) 7%, var(--aff-bg));
+}
+
+.column[data-side="neg"][data-drop] {
+	background: color-mix(in oklch, var(--accent) 7%, var(--neg-bg));
+}

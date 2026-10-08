@@ -1,0 +1,108 @@
+.cell {
+	--col-bg: var(--aff-bg);
+	--tint: var(--col-bg);
+	position: absolute;
+	top: 0;
+	z-index: 2;
+	min-height: calc(var(--cell-pad-y) * 2 + var(--cell-font) * var(--cell-line));
+	padding: var(--cell-pad-y) var(--cell-pad-x);
+	border-radius: 0.5rem;
+	background: color-mix(in oklch, var(--tint) var(--tint-strength), var(--col-bg));
+	font-size: var(--cell-font);
+	line-height: var(--cell-line);
+	hyphens: auto;
+	cursor: text;
+	transform-origin: 0 0;
+	transition:
+		background-color var(--dur) var(--ease-out),
+		box-shadow var(--dur) var(--ease-out);
+}
+
+.cell[data-side="neg"] {
+	--col-bg: var(--neg-bg);
+}
+
+.cell:hover {
+	background: color-mix(in oklch, var(--tint) var(--tint-strength), color-mix(in oklch, var(--ctp-text) 5%, var(--col-bg)));
+}
+
+.cell[data-editing] {
+	z-index: 3;
+	background: color-mix(in oklch, var(--tint) var(--tint-strength), color-mix(in oklch, var(--ctp-text) 7%, var(--col-bg)));
+	box-shadow: 0 0 0 0.09375rem color-mix(in oklch, var(--accent) 45%, transparent);
+}
+
+.cell[data-editing] :global(.ProseMirror) {
+	caret-color: var(--accent);
+}
+
+.cell[data-drop] {
+	box-shadow: 0 0 0 0.125rem var(--accent);
+}
+
+.cell[data-color="red"] {
+	--tint: var(--ctp-red);
+}
+.cell[data-color="peach"] {
+	--tint: var(--ctp-peach);
+}
+.cell[data-color="yellow"] {
+	--tint: var(--ctp-yellow);
+}
+.cell[data-color="green"] {
+	--tint: var(--ctp-green);
+}
+.cell[data-color="blue"] {
+	--tint: var(--ctp-blue);
+}
+.cell[data-color="mauve"] {
+	--tint: var(--ctp-mauve);
+}
+
+.extend {
+	position: absolute;
+	top: calc(var(--cell-pad-y) + var(--cell-font) * var(--cell-line) / 2 - 0.6875rem);
+	left: calc(100% + 0.125rem);
+	display: grid;
+	place-items: center;
+	width: 1.375rem;
+	height: 1.375rem;
+	padding: 0;
+	border: none;
+	border-radius: 999rem;
+	background: var(--popup-bg);
+	color: var(--text-muted);
+	box-shadow: var(--shadow-popup);
+	cursor: grab;
+	opacity: 0;
+	transform: translateX(-0.375rem) scale(0.85);
+	pointer-events: none;
+	transition:
+		opacity var(--dur-fast) var(--ease-out),
+		transform var(--dur-spring) var(--ease-spring),
+		background-color var(--dur-fast) var(--ease-out),
+		color var(--dur-fast) var(--ease-out);
+}
+
+.extend::before {
+	content: "";
+	position: absolute;
+	inset: -0.375rem -0.375rem -0.375rem -0.5rem;
+}
+
+.cell:hover .extend,
+.cell[data-editing] .extend {
+	opacity: 1;
+	transform: none;
+	pointer-events: auto;
+}
+
+.extend:hover {
+	background: var(--accent);
+	color: var(--ctp-base);
+}
+
+.extend:active {
+	cursor: grabbing;
+	transform: scale(0.92);
+}
