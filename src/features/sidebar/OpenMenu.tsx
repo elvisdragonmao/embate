@@ -1,11 +1,12 @@
 import { Popover } from "@base-ui/react/popover";
-import { CheckIcon, PlusIcon, TrashIcon, UploadSimpleIcon } from "@phosphor-icons/react";
+import { CheckIcon, PlusIcon, SparkleIcon, TrashIcon, UploadSimpleIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import { useNavigate } from "react-router";
+import { createDemoRecord, DEMO_ID } from "../../lib/demo";
 import { createId } from "../../lib/id";
 import { createRecord, normalizeRecord } from "../../lib/record";
-import { deleteRecord, listRecords, saveRecord } from "../../lib/storage";
+import { deleteRecord, listRecords, loadRecord, saveRecord } from "../../lib/storage";
 import { formatDate } from "../../lib/time";
 import { flushSave, useFlowStore } from "../../stores/flow";
 import { useUIStore } from "../../stores/ui";
@@ -86,6 +87,13 @@ function OpenMenuContent({ onDone }: { onDone: () => void }) {
 		onDone();
 	};
 
+	// Reopens the demo as left; deleting it from the list brings back a fresh copy next time.
+	const openDemo = () => {
+		if (!loadRecord(DEMO_ID)) saveRecord(createDemoRecord());
+		queryClient.invalidateQueries({ queryKey: recordsKey });
+		openRecord(DEMO_ID);
+	};
+
 	return (
 		<>
 			<div className={styles.toolbar}>
@@ -96,6 +104,10 @@ function OpenMenuContent({ onDone }: { onDone: () => void }) {
 				<button type="button" className={styles.tool} onClick={() => fileRef.current?.click()}>
 					<UploadSimpleIcon size="1rem" weight="bold" />
 					Upload
+				</button>
+				<button type="button" className={styles.tool} onClick={openDemo}>
+					<SparkleIcon size="1rem" weight="bold" />
+					Demo
 				</button>
 				<input
 					ref={fileRef}
