@@ -1,0 +1,147 @@
+/* Shared typography for rendered markdown and Milkdown editors. */
+.prose {
+	overflow-wrap: break-word;
+}
+
+.prose :global(.ProseMirror) {
+	outline: none;
+	white-space: pre-wrap;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose pre,
+.prose table,
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+	margin: 0;
+}
+
+.prose > * + *,
+.prose :global(.ProseMirror) > * + * {
+	margin-top: 0.375em;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.prose h1 {
+	font-size: 1.25em;
+}
+
+.prose h2 {
+	font-size: 1.125em;
+}
+
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+	font-size: 1em;
+}
+
+.prose strong {
+	font-weight: 600;
+	color: var(--ctp-text);
+}
+
+.prose em {
+	font-style: italic;
+}
+
+.prose del,
+.prose s {
+	text-decoration-thickness: 0.0625rem;
+	color: var(--text-muted);
+}
+
+.prose a {
+	color: var(--ctp-blue);
+	text-decoration: underline;
+	text-decoration-thickness: 0.0625rem;
+	text-underline-offset: 0.15em;
+}
+
+.prose code {
+	font-family: var(--font-mono);
+	font-size: 0.875em;
+	padding: 0.0625rem 0.25rem;
+	border-radius: 0.25rem;
+	background: color-mix(in oklch, var(--ctp-text) 8%, transparent);
+}
+
+.prose pre {
+	padding: 0.5rem 0.625rem;
+	border-radius: var(--radius-s);
+	background: color-mix(in oklch, var(--ctp-text) 6%, transparent);
+	overflow-x: auto;
+}
+
+.prose pre code {
+	padding: 0;
+	background: none;
+}
+
+.prose ul,
+.prose ol {
+	padding-left: 1.25em;
+}
+
+.prose li + li {
+	margin-top: 0.125em;
+}
+
+.prose li > p {
+	margin: 0;
+}
+
+.prose ul > li::marker {
+	color: var(--text-faint);
+}
+
+.prose ol > li::marker {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.prose blockquote {
+	padding-left: 0.75em;
+	color: var(--text-muted);
+	box-shadow: inset 0.125rem 0 0 var(--ctp-surface1);
+}
+
+.prose hr {
+	border: none;
+	height: 1px;
+	margin: 0.75em 0;
+	background: var(--hairline);
+}
+
+.prose table {
+	border-collapse: collapse;
+	font-size: 0.9375em;
+}
+
+.prose th,
+.prose td {
+	padding: 0.25em 0.5em;
+	border: 1px solid var(--hairline);
+	text-align: left;
+}
+
+.prose li[data-item-type="task"] {
+	list-style: none;
+}

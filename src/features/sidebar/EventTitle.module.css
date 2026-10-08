@@ -1,0 +1,33 @@
+.title {
+	display: block;
+	width: 100%;
+	margin: 0;
+	padding: 0.25rem 0.375rem;
+	margin-inline: -0.375rem;
+	width: calc(100% + 0.75rem);
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	font-size: 1.125rem;
+	font-weight: 600;
+	line-height: 1.35;
+	letter-spacing: -0.01em;
+	resize: none;
+	overflow: hidden;
+	cursor: text;
+	transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.title::placeholder {
+	color: var(--text-faint);
+}
+
+.title:hover {
+	background: var(--hover);
+}
+
+.title:focus {
+	outline: none;
+	box-shadow: none;
+	background: var(--hover);
+}

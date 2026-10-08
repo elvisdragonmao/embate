@@ -1,0 +1,52 @@
+.positioner {
+	z-index: 50;
+}
+
+.popup {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.3125rem 0.5rem;
+	border-radius: var(--radius-s);
+	background: var(--ctp-text);
+	color: var(--ctp-base);
+	font-size: 0.75rem;
+	font-weight: 500;
+	line-height: 1.2;
+	white-space: nowrap;
+	transform-origin: var(--transform-origin);
+	transition:
+		opacity var(--dur-fast) var(--ease-out),
+		transform var(--dur-fast) var(--ease-out);
+}
+
+.popup[data-starting-style],
+.popup[data-ending-style] {
+	opacity: 0;
+	transform: scale(0.96);
+}
+
+.popup[data-instant] {
+	transition-duration: 0ms;
+}
+
+.keys {
+	display: inline-flex;
+	gap: 0.1875rem;
+}
+
+.key {
+	min-width: 1.125rem;
+	padding: 0.0625rem 0.25rem;
+	border-radius: 0.25rem;
+	background: color-mix(in oklch, currentColor 16%, transparent);
+	font-family: var(--font-mono);
+	font-size: 0.6875rem;
+	font-weight: 500;
+	text-align: center;
+	line-height: 1.3;
+}
+
+.popup .key {
+	background: color-mix(in oklch, var(--ctp-base) 18%, transparent);
+}

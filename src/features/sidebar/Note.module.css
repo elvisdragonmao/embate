@@ -1,0 +1,29 @@
+.note {
+	flex: 1;
+	min-height: 0;
+	margin-inline: -0.5rem;
+	border-radius: var(--radius-m);
+	background: color-mix(in oklch, var(--ctp-text) 2.5%, transparent);
+	transition: background-color var(--dur) var(--ease-out);
+}
+
+.note:focus-within {
+	background: color-mix(in oklch, var(--ctp-text) 4.5%, transparent);
+}
+
+.editor {
+	height: 100%;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: 0.625rem 0.75rem;
+	font-size: 0.875rem;
+	line-height: 1.6;
+	cursor: text;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ctp-surface1) transparent;
+}
+
+.editor :global(.ProseMirror) {
+	min-height: 100%;
+	caret-color: var(--accent);
+}
