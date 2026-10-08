@@ -1,0 +1,40 @@
+{
+	"name": "embate",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "tsc --noEmit && vite build",
+		"dev": "vite",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"preinstall": "npx only-allow pnpm",
+		"prepare": "sh -c 'if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then git config core.hooksPath .githooks; fi'",
+		"preview": "vite preview",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@base-ui/react": "^1.8.0",
+		"@milkdown/kit": "^7.22.2",
+		"@phosphor-icons/react": "^2.1.10",
+		"@tanstack/react-query": "^5.104.1",
+		"micromark": "^4.0.3",
+		"micromark-extension-gfm": "^3.0.0",
+		"motion": "^14.0.0",
+		"react": "^19.3.0",
+		"react-dom": "^19.3.0",
+		"react-router": "^8.4.0",
+		"zustand": "^5.0.15"
+	},
+	"devDependencies": {
+		"@types/react": "^19.3.0",
+		"@types/react-dom": "^19.3.0",
+		"@vitejs/plugin-react": "^6.1.2",
+		"prettier": "^3.9.9",
+		"prettier-plugin-organize-imports": "^4.3.0",
+		"prettier-plugin-packagejson": "^3.0.2",
+		"typescript": "^6.0.3",
+		"vite": "^8.3.3"
+	},
+	"packageManager": "pnpm@12.10.1+sha512.ba40a37eb1a370d60fea8c4cf1d364c13bcccef518e98ad2bcee954f539d38da37458e58261a3fa55e06523450ea0ffff9f497b135be41f2c15c1642bacace6c"
+}
