@@ -1,5 +1,6 @@
 {
 	"name": "embate",
+	"account_id": "247e3a0e0c4b1d5d8ca405dfc0ffd2d0",
 	"compatibility_date": "2025-06-01",
 	"assets": {
 		"directory": "./dist",
