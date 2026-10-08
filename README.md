@@ -1,37 +1,37 @@
 # embate
 
-給評審用的 Debate Flow 工具。左邊是計時器與筆記，右邊依發言順序排出各欄位，可以一邊聽一邊快速記下論點，並用箭頭把回應連到它回應的論點。
+A flowing tool for debate judges. The sidebar holds the round's title, format, speech timer, prep clocks and notes; the board lays out one column per speech so you can write down arguments as you hear them and draw an arrow from each response to the argument it answers.
 
-支援 Public Forum、Lincoln–Douglas、Policy、British Parliamentary、World Schools、Asian Parliamentary 與新式奧瑞岡，切換賽制會一併換上對應的欄位、快速計時與準備時間。
+Formats: Public Forum, Lincoln–Douglas, Policy, British Parliamentary, World Schools, Asian Parliamentary and 新式奧瑞岡 (Oregon-Oxford). Switching format swaps in that format's speeches, quick timers and prep time.
 
-所有內容都會自動存在瀏覽器的 localStorage，也可以下載成 JSON 備份、再上傳開啟。
+Everything saves to your browser's localStorage as you type. You can also download a round as JSON and open it again later. Open → Demo loads a sample Public Forum round that uses every feature.
 
-## 使用方式
+## Using it
 
-- 在欄位空白處點一下就新增論點；`Enter` 新增下一點、`Shift Enter` 換行、`Tab` 新增子論點（在剛新增的空白點上按 `Tab` 則會縮排到上一點底下）。
-- 按住論點上下拖曳可以移動位置（子論點會一起移動），左右拖曳可以調整縮排。
-- 滑到論點或它右側，會出現箭頭：點一下延伸到下一個發言，拖曳則可以連到任何後面的欄位或論點。`⌘ Enter` 也可以直接延伸。點擊連線即可刪除。
-- 論點支援 Markdown 與 `⌘B`、`⌘I`、`⌘⇧X` 等快捷鍵；右鍵可以標顏色、取消連結或刪除。
-- 點欄位標題可以改名；標題下方的賽制名稱可以切換賽制。
-- 計時器下方是正反方的準備時間，數字可以直接點擊修改，`⌥[`、`⌥]` 分別開始或暫停。
-- 欄位預設填滿畫面寬度，觸控板捏合可以調整欄寬。
-- `⌘/` 打開完整的快捷鍵列表。
+- Click empty space in a column to add a point. `Enter` adds the next point, `Shift Enter` breaks the line, and `Tab` adds a sub-point (on a point you just added and left empty, `Tab` nests it under the one above).
+- Drag a point up or down to move it together with its sub-points; drag sideways to change how deep it's nested.
+- Hover a point, or the space to its right, to show its arrow. Click the arrow to extend the point into the next speech, or drag it onto any later speech or point to link there. `⌘ Enter` extends too. Click a link to remove it.
+- Points take Markdown and the usual shortcuts (`⌘B`, `⌘I`, `⌘⇧X`). Right-click a point to color, unlink or delete it.
+- Click a speech label to rename it. Click the format under the title to switch formats.
+- The aff and neg prep clocks sit under the main timer; click the digits to change them, or press `⌥[` and `⌥]` to start or pause them.
+- Columns fill the board by default. Pinch on a trackpad to widen or narrow them.
+- `⌘/` opens Info, which lists every shortcut.
 
-## 開發
+## Development
 
-需要 Node.js 與 pnpm（版本見 `package.json` 的 `packageManager`）。
+Requires Node.js and pnpm (see `packageManager` in `package.json` for the version).
 
 ```sh
 pnpm install
-pnpm dev          # 開發伺服器
-pnpm build        # 型別檢查並建置到 dist/
+pnpm dev          # dev server
+pnpm build        # type-check and build to dist/
 pnpm format       # Prettier
 ```
 
-技術：React、React Router、Zustand、React Query、Milkdown、Base UI、Motion、Phosphor Icons。顏色採用 Catppuccin（Latte / Mocha，依系統自動切換），樣式使用 CSS Modules。
+Built with React, React Router, Zustand, TanStack Query, Milkdown, Base UI, Motion and Phosphor Icons. Colors follow Catppuccin (Latte and Mocha, matching the system theme), and styles are CSS Modules.
 
-部署設定在 `wrangler.jsonc`，以 Cloudflare Workers 靜態資源搭配 SPA fallback 提供 `dist/`。
+`wrangler.jsonc` serves `dist/` as Cloudflare Workers static assets with a single-page-app fallback.
 
-## 授權條款
+## License
 
-本專案採用 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) 授權，詳情請參閱 [LICENSE](./LICENSE) 檔案。
+Licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). See [LICENSE](./LICENSE).
