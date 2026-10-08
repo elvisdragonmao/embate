@@ -1,8 +1,9 @@
 import { create } from "zustand";
+import { formatOf, type FormatId, type Side } from "../lib/formats";
 import { createId } from "../lib/id";
-import { SPEECHES, type FlowRecord, type Idea, type IdeaColor } from "../lib/record";
+import { clockElapsed, prepClock, type Clock, type FlowRecord, type Idea, type IdeaColor } from "../lib/record";
 import { saveRecord, setLastId } from "../lib/storage";
-import { childrenOf, descendantIds } from "../lib/tree";
+import { childrenOf, descendantIds, moveIdea, type Drop } from "../lib/tree";
 
 export interface AddIdeaInput {
 	col: number;
@@ -32,6 +33,12 @@ interface FlowState {
 	indent: (id: string) => boolean;
 	outdent: (id: string) => boolean;
 	remove: (id: string, options?: { history?: boolean }) => void;
+	move: (id: string, drop: Drop) => void;
+	setFormat: (format: FormatId) => void;
+	setColumnLabel: (col: number, label: string) => void;
+	togglePrep: (side: Side) => void;
+	resetPrep: (side: Side) => void;
+	setPrepDuration: (side: Side, ms: number) => void;
 	undo: () => boolean;
 	redo: () => boolean;
 }
@@ -186,6 +193,58 @@ export const useFlowStore = create<FlowState>()((set, get) => {
 			);
 		},
 
+		move: (id, drop) => {
+			update(
+				ideas => {
+					const next = moveIdea(ideas, id, drop);
+					return next && !sameStructure(next, ideas) ? next : null;
+				},
+				{ structural: true }
+			);
+		},
+
+		setFormat: formatId => {
+			const { record, rev } = get();
+			if (!record || record.format === formatId) return;
+			const format = formatOf(formatId);
+			const used = record.ideas.reduce((max, idea) => Math.max(max, idea.col + 1), 0);
+			// Columns that already hold ideas survive a switch to a format with fewer speeches.
+			const columns = Array.from({ length: Math.max(format.speeches.length, used) }, (_, col) => format.speeches[col]?.label ?? record.columns[col] ?? `${col + 1}`);
+			// Prep that isn't running restarts at the new format's length.
+			const fresh = (clock: Clock) => (clock.startedAt === null ? prepClock(format.prep) : clock);
+			set({ record: { ...record, format: format.id, columns, prep: { aff: fresh(record.prep.aff), neg: fresh(record.prep.neg) }, updatedAt: Date.now() }, rev: rev + 1 });
+		},
+
+		setColumnLabel: (col, label) => {
+			const { record } = get();
+			if (!record || col >= record.columns.length) return;
+			const columns = record.columns.slice();
+			columns[col] = label.trim() || formatOf(record.format).speeches[col]?.label || `${col + 1}`;
+			if (columns[col] !== record.columns[col]) set({ record: { ...record, columns, updatedAt: Date.now() } });
+		},
+
+		togglePrep: side => {
+			const { record } = get();
+			if (!record) return;
+			const now = Date.now();
+			const pause = (clock: Clock): Clock => (clock.startedAt === null ? clock : { ...clock, elapsed: clockElapsed(clock, now), startedAt: null });
+			const clock = record.prep[side];
+			const other = side === "aff" ? "neg" : "aff";
+			// Only one team preps at a time.
+			const prep = clock.startedAt === null ? { [side]: { ...clock, startedAt: now }, [other]: pause(record.prep[other]) } : { ...record.prep, [side]: pause(clock) };
+			set({ record: { ...record, prep: prep as FlowRecord["prep"], updatedAt: now } });
+		},
+
+		resetPrep: side => {
+			const { record } = get();
+			if (record) set({ record: { ...record, prep: { ...record.prep, [side]: { ...record.prep[side], elapsed: 0, startedAt: null } }, updatedAt: Date.now() } });
+		},
+
+		setPrepDuration: (side, duration) => {
+			const { record } = get();
+			if (record) set({ record: { ...record, prep: { ...record.prep, [side]: { duration, elapsed: 0, startedAt: null } }, updatedAt: Date.now() } });
+		},
+
 		undo: () => {
 			const { record, future, rev } = get();
 			if (!record) return false;
@@ -210,7 +269,7 @@ export const useFlowStore = create<FlowState>()((set, get) => {
 
 export const getIdea = (id: string) => useFlowStore.getState().record?.ideas.find(idea => idea.id === id);
 
-export const lastColumn = SPEECHES.length - 1;
+export const columnCount = () => useFlowStore.getState().record?.columns.length ?? 0;
 
 // Autosave: debounce writes, flush when the page is hidden.
 let pending: FlowRecord | null = null;

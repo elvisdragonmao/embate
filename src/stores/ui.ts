@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { isBlank } from "../lib/record";
 import { hasChildren } from "../lib/tree";
 import { useFlowStore } from "./flow";
@@ -14,7 +13,7 @@ export interface Editing {
 
 interface UIState {
 	editing: Editing | null;
-	/** Column width in rem chosen by pinching; null fits the columns to the viewport. */
+	/** Column width in rem chosen by pinching; null fits all columns to the viewport, which is how every visit starts. */
 	columnWidth: number | null;
 	helpOpen: boolean;
 	openMenuOpen: boolean;
@@ -33,28 +32,23 @@ function dropIfBlank(id: string) {
 	if (idea && isBlank(idea.text) && !hasChildren(ideas, id)) flow.remove(id, { history: false });
 }
 
-export const useUIStore = create<UIState>()(
-	persist(
-		(set, get) => ({
-			editing: null,
-			columnWidth: null,
-			helpOpen: false,
-			openMenuOpen: false,
-			edit: (id, caret = { at: "end" }) => {
-				const previous = get().editing;
-				set({ editing: { id, caret } });
-				if (previous && previous.id !== id) dropIfBlank(previous.id);
-			},
-			stopEditing: () => {
-				const previous = get().editing;
-				if (!previous) return;
-				set({ editing: null });
-				dropIfBlank(previous.id);
-			},
-			setColumnWidth: columnWidth => set({ columnWidth }),
-			setHelpOpen: helpOpen => set({ helpOpen }),
-			setOpenMenuOpen: openMenuOpen => set({ openMenuOpen })
-		}),
-		{ name: "embate:ui", partialize: ({ columnWidth }) => ({ columnWidth }) }
-	)
-);
+export const useUIStore = create<UIState>()((set, get) => ({
+	editing: null,
+	columnWidth: null,
+	helpOpen: false,
+	openMenuOpen: false,
+	edit: (id, caret = { at: "end" }) => {
+		const previous = get().editing;
+		set({ editing: { id, caret } });
+		if (previous && previous.id !== id) dropIfBlank(previous.id);
+	},
+	stopEditing: () => {
+		const previous = get().editing;
+		if (!previous) return;
+		set({ editing: null });
+		dropIfBlank(previous.id);
+	},
+	setColumnWidth: columnWidth => set({ columnWidth }),
+	setHelpOpen: helpOpen => set({ helpOpen }),
+	setOpenMenuOpen: openMenuOpen => set({ openMenuOpen })
+}));
