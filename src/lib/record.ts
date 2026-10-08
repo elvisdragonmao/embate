@@ -1,3 +1,4 @@
+import { speechColumns, type Column } from "./columns";
 import { FORMAT_IDS, formatOf, type FormatId, type Side } from "./formats";
 import { createId } from "./id";
 
@@ -32,8 +33,8 @@ export interface FlowRecord {
 	version: 1;
 	id: string;
 	format: FormatId;
-	/** Column labels; editable, initialised from the format's speeches. */
-	columns: string[];
+	/** Speech (and optional cross-ex) columns in speaking order; labels are editable. */
+	columns: Column[];
 	/** Prep time per side for formats that have it. */
 	prep: Record<Side, Clock>;
 	title: string;
@@ -53,7 +54,7 @@ export function createRecord(formatId: FormatId = "pf"): FlowRecord {
 		version: 1,
 		id: createId(),
 		format: format.id,
-		columns: format.speeches.map(speech => speech.label),
+		columns: speechColumns(format),
 		prep: { aff: prepClock(format.prep), neg: prepClock(format.prep) },
 		title: "",
 		createdAt: now,
@@ -100,8 +101,14 @@ export function normalizeRecord(input: unknown): FlowRecord | null {
 
 	const format = formatOf(FORMAT_IDS.includes(input.format as FormatId) ? (input.format as FormatId) : "pf");
 	const used = ideas.reduce((max, idea) => Math.max(max, idea.col + 1), 0);
-	const labels = Array.isArray(input.columns) ? input.columns.slice(0, MAX_COLUMNS).map(label => str(label)) : [];
-	const columns = Array.from({ length: Math.max(labels.length || format.speeches.length, used) }, (_, col) => labels[col] ?? format.speeches[col]?.label ?? `${col + 1}`);
+	// Older records stored plain labels; they never had cross-ex columns.
+	const stored: Column[] = (Array.isArray(input.columns) ? input.columns.slice(0, MAX_COLUMNS) : []).map((value, col) =>
+		isObject(value)
+			? { label: str(value.label), side: value.side === "aff" || value.side === "neg" ? value.side : null }
+			: { label: str(value), side: format.speeches[col]?.side ?? (col % 2 === 0 ? "aff" : "neg") }
+	);
+	const base = stored.length ? stored : speechColumns(format);
+	const columns = Array.from({ length: Math.max(base.length, used) }, (_, col): Column => base[col] ?? { label: `${col + 1}`, side: col % 2 === 0 ? "aff" : "neg" });
 	const prep = isObject(input.prep) ? input.prep : {};
 	const clock = (value: unknown): Clock => {
 		const fallback = prepClock(format.prep);
