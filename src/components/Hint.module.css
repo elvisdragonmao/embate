@@ -39,7 +39,7 @@
 	min-width: 1.125rem;
 	padding: 0.0625rem 0.25rem;
 	border-radius: 0.25rem;
-	background: color-mix(in oklch, currentColor 16%, transparent);
+	background: color-mix(in oklab, currentColor 16%, transparent);
 	font-family: var(--font-mono);
 	font-size: 0.6875rem;
 	font-weight: 500;
@@ -48,5 +48,5 @@
 }
 
 .popup .key {
-	background: color-mix(in oklch, var(--ctp-base) 18%, transparent);
+	background: color-mix(in oklab, var(--ctp-base) 18%, transparent);
 }

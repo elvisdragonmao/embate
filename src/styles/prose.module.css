@@ -80,13 +80,13 @@
 	font-size: 0.875em;
 	padding: 0.0625rem 0.25rem;
 	border-radius: 0.25rem;
-	background: color-mix(in oklch, var(--ctp-text) 8%, transparent);
+	background: color-mix(in oklab, var(--ctp-text) 8%, transparent);
 }
 
 .prose pre {
 	padding: 0.5rem 0.625rem;
 	border-radius: var(--radius-s);
-	background: color-mix(in oklch, var(--ctp-text) 6%, transparent);
+	background: color-mix(in oklab, var(--ctp-text) 6%, transparent);
 	overflow-x: auto;
 }
 

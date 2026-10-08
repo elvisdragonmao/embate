@@ -79,11 +79,11 @@
 	--accent: var(--ctp-mauve);
 	--aff: var(--ctp-blue);
 	--neg: var(--ctp-red);
-	--hover: color-mix(in oklch, var(--ctp-text) 6%, transparent);
-	--press: color-mix(in oklch, var(--ctp-text) 10%, transparent);
-	--selection: color-mix(in oklch, var(--accent) 24%, transparent);
-	--focus-ring: 0 0 0 0.125rem color-mix(in oklch, var(--accent) 55%, transparent);
-	--hairline: color-mix(in oklch, var(--ctp-text) 9%, transparent);
+	--hover: color-mix(in oklab, var(--ctp-text) 6%, transparent);
+	--press: color-mix(in oklab, var(--ctp-text) 10%, transparent);
+	--selection: color-mix(in oklab, var(--accent) 24%, transparent);
+	--focus-ring: 0 0 0 0.125rem color-mix(in oklab, var(--accent) 55%, transparent);
+	--hairline: color-mix(in oklab, var(--ctp-text) 9%, transparent);
 	--shadow-popup: 0 0 0 1px var(--hairline), 0 0.75rem 2rem -0.5rem var(--shadow-color), 0 0.25rem 0.75rem -0.25rem var(--shadow-color);
 
 	--radius-s: 0.375rem;

@@ -41,7 +41,7 @@
 	width: 1.375rem;
 	height: 1.375rem;
 	border-radius: 999rem;
-	background: color-mix(in oklch, var(--swatch) 70%, transparent);
+	background: color-mix(in oklab, var(--swatch) 70%, transparent);
 	outline: none;
 	cursor: pointer;
 	transition:
@@ -80,7 +80,7 @@
 .swatch[data-checked] {
 	box-shadow:
 		0 0 0 0.125rem var(--popup-bg),
-		0 0 0 0.25rem color-mix(in oklch, var(--swatch) 80%, var(--ctp-text));
+		0 0 0 0.25rem color-mix(in oklab, var(--swatch) 80%, var(--ctp-text));
 }
 
 .swatch[data-swatch="none"][data-checked] {
@@ -121,5 +121,5 @@
 }
 
 .item[data-danger][data-highlighted] {
-	background: color-mix(in oklch, var(--ctp-red) 12%, transparent);
+	background: color-mix(in oklab, var(--ctp-red) 12%, transparent);
 }

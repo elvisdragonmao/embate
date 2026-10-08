@@ -3,12 +3,12 @@
 	min-height: 0;
 	margin-inline: -0.5rem;
 	border-radius: var(--radius-m);
-	background: color-mix(in oklch, var(--ctp-text) 2.5%, transparent);
+	background: color-mix(in oklab, var(--ctp-base) 55%, var(--bg-sidebar));
 	transition: background-color var(--dur) var(--ease-out);
 }
 
 .note:focus-within {
-	background: color-mix(in oklch, var(--ctp-text) 4.5%, transparent);
+	background: var(--ctp-base);
 }
 
 .editor {

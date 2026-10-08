@@ -7,10 +7,11 @@
 	min-height: calc(var(--cell-pad-y) * 2 + var(--cell-font) * var(--cell-line));
 	padding: var(--cell-pad-y) var(--cell-pad-x);
 	border-radius: 0.5rem;
-	background: color-mix(in oklch, var(--tint) var(--tint-strength), var(--col-bg));
+	background: color-mix(in oklab, var(--tint) var(--tint-strength), var(--col-bg));
 	font-size: var(--cell-font);
 	line-height: var(--cell-line);
 	hyphens: auto;
+	hyphenate-limit-chars: 8 4 4;
 	cursor: text;
 	transform-origin: 0 0;
 	transition:
@@ -23,13 +24,13 @@
 }
 
 .cell:hover {
-	background: color-mix(in oklch, var(--tint) var(--tint-strength), color-mix(in oklch, var(--ctp-text) 5%, var(--col-bg)));
+	background: color-mix(in oklab, var(--tint) var(--tint-strength), color-mix(in oklab, var(--ctp-text) 5%, var(--col-bg)));
 }
 
 .cell[data-editing] {
 	z-index: 3;
-	background: color-mix(in oklch, var(--tint) var(--tint-strength), color-mix(in oklch, var(--ctp-text) 7%, var(--col-bg)));
-	box-shadow: 0 0 0 0.09375rem color-mix(in oklch, var(--accent) 45%, transparent);
+	background: color-mix(in oklab, var(--tint) var(--tint-strength), color-mix(in oklab, var(--ctp-text) 7%, var(--col-bg)));
+	box-shadow: 0 0 0 0.09375rem color-mix(in oklab, var(--accent) 45%, transparent);
 }
 
 .cell[data-editing] :global(.ProseMirror) {

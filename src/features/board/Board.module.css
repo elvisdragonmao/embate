@@ -9,7 +9,7 @@
 }
 
 .canvas {
-	--neg-bg: color-mix(in oklch, var(--ctp-mantle) 45%, var(--ctp-base));
+	--neg-bg: color-mix(in oklab, var(--ctp-mantle) 45%, var(--ctp-base));
 	--aff-bg: var(--ctp-base);
 	position: relative;
 	min-height: 100%;
@@ -66,9 +66,9 @@
 }
 
 .column[data-drop] {
-	background: color-mix(in oklch, var(--accent) 7%, var(--aff-bg));
+	background: color-mix(in oklab, var(--accent) 7%, var(--aff-bg));
 }
 
 .column[data-side="neg"][data-drop] {
-	background: color-mix(in oklch, var(--accent) 7%, var(--neg-bg));
+	background: color-mix(in oklab, var(--accent) 7%, var(--neg-bg));
 }

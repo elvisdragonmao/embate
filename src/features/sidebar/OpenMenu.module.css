@@ -100,7 +100,7 @@
 }
 
 .item[data-current] {
-	background: color-mix(in oklch, var(--accent) 10%, transparent);
+	background: color-mix(in oklab, var(--accent) 10%, transparent);
 }
 
 .name {
@@ -161,6 +161,6 @@
 }
 
 .remove[data-confirming] {
-	background: color-mix(in oklch, var(--ctp-red) 16%, transparent);
+	background: color-mix(in oklab, var(--ctp-red) 16%, transparent);
 	color: var(--ctp-red);
 }

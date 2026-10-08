@@ -103,7 +103,7 @@ input.digits {
 .track {
 	height: 0.25rem;
 	border-radius: 999rem;
-	background: color-mix(in oklch, var(--ctp-text) 9%, transparent);
+	background: color-mix(in oklab, var(--ctp-text) 9%, transparent);
 	overflow: hidden;
 }
 
@@ -149,7 +149,7 @@ input.digits {
 }
 
 .primary:hover {
-	background: color-mix(in oklch, var(--ctp-text) 88%, var(--ctp-base));
+	background: color-mix(in oklab, var(--ctp-text) 88%, var(--ctp-base));
 }
 
 .primary:active,

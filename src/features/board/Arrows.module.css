@@ -54,7 +54,7 @@
 }
 
 .arrow[data-active] {
-	stroke: color-mix(in oklch, var(--arrow) 30%, var(--accent));
+	stroke: color-mix(in oklab, var(--arrow) 30%, var(--accent));
 	stroke-width: 1.75px;
 	opacity: 1;
 }
