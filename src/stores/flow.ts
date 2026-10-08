@@ -47,6 +47,18 @@ function mergeText(snapshot: Idea[], current: Idea[]) {
 	});
 }
 
+/** Same ideas in the same places, ignoring text. */
+const sameStructure = (a: Idea[], b: Idea[]) =>
+	a.length === b.length &&
+	a.every((idea, index) => idea.id === b[index].id && idea.col === b[index].col && idea.parent === b[index].parent && idea.from === b[index].from && idea.color === b[index].color);
+
+/** Drops snapshots that would change nothing, e.g. after an empty idea was cleaned up without history. */
+function trimNoops(stack: Idea[][], current: Idea[]) {
+	let end = stack.length;
+	while (end > 0 && sameStructure(stack[end - 1], current)) end--;
+	return end === stack.length ? stack : stack.slice(0, end);
+}
+
 export const useFlowStore = create<FlowState>()((set, get) => {
 	const update = (ideas: (ideas: Idea[]) => Idea[] | null, options: { structural?: boolean; history?: boolean } = {}) => {
 		const { record, rev, past } = get();
@@ -175,17 +187,21 @@ export const useFlowStore = create<FlowState>()((set, get) => {
 		},
 
 		undo: () => {
-			const { record, past, future, rev } = get();
+			const { record, future, rev } = get();
+			if (!record) return false;
+			const past = trimNoops(get().past, record.ideas);
 			const snapshot = past.at(-1);
-			if (!record || !snapshot) return false;
+			if (!snapshot) return false;
 			set({ record: { ...record, ideas: mergeText(snapshot, record.ideas), updatedAt: Date.now() }, past: past.slice(0, -1), future: [...future, record.ideas], rev: rev + 1 });
 			return true;
 		},
 
 		redo: () => {
-			const { record, past, future, rev } = get();
+			const { record, past, rev } = get();
+			if (!record) return false;
+			const future = trimNoops(get().future, record.ideas);
 			const snapshot = future.at(-1);
-			if (!record || !snapshot) return false;
+			if (!snapshot) return false;
 			set({ record: { ...record, ideas: mergeText(snapshot, record.ideas), updatedAt: Date.now() }, past: [...past, record.ideas], future: future.slice(0, -1), rev: rev + 1 });
 			return true;
 		}
