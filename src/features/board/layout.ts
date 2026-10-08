@@ -14,6 +14,8 @@ export const SIZES = {
 	cellPadX: 0.5,
 	font: 0.875,
 	line: 1.5,
+	/** Narrowest column the default fit allows; past this the board scrolls sideways. Pinching can go narrower. */
+	fitMin: 8.5,
 	minColumn: 6,
 	maxColumn: 40,
 	tail: 16

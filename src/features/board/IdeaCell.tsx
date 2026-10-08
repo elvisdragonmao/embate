@@ -16,7 +16,10 @@ import { SIZES } from "./layout";
 
 interface IdeaCellProps {
 	idea: Idea;
-	side: Side;
+	side: Side | null;
+	/** Column offset and width, in units of one speech column. */
+	left: number;
+	span: number;
 	depth: number;
 	y: number;
 	/** Present while this idea is being edited. */
@@ -51,7 +54,7 @@ function useGlide(value: MotionValue<number>, target: number, glide: boolean, he
 	}, [target, held]);
 }
 
-export const IdeaCell = memo(function IdeaCell({ idea, side, depth, y, caret, glide, enter, canExtend, dropTarget, lifted, hover }: IdeaCellProps) {
+export const IdeaCell = memo(function IdeaCell({ idea, side, left, span, depth, y, caret, glide, enter, canExtend, dropTarget, lifted, hover }: IdeaCellProps) {
 	const { yOf, xOf, indent, observe, startLink, pressIdea } = useBoard();
 	const ref = useRef<HTMLDivElement>(null);
 	const yValue = yOf(idea.id, y);
@@ -66,7 +69,7 @@ export const IdeaCell = memo(function IdeaCell({ idea, side, depth, y, caret, gl
 		<motion.div
 			ref={ref}
 			data-idea-id={idea.id}
-			data-side={side}
+			data-side={side ?? "cross"}
 			data-color={idea.color ?? undefined}
 			data-editing={caret ? "" : undefined}
 			data-drop={dropTarget || undefined}
@@ -76,8 +79,8 @@ export const IdeaCell = memo(function IdeaCell({ idea, side, depth, y, caret, gl
 			style={{
 				y: yValue,
 				x: xValue,
-				left: `calc(${idea.col} * var(--col-w) + ${SIZES.padLeft}rem)`,
-				width: `calc(var(--col-w) - ${SIZES.padLeft + SIZES.padRight + depth * SIZES.indent}rem)`
+				left: `calc(${left} * var(--col-w) + ${SIZES.padLeft}rem)`,
+				width: `calc(${span} * var(--col-w) - ${SIZES.padLeft + SIZES.padRight + depth * SIZES.indent}rem)`
 			}}
 			initial={enter ? GROW_FROM : false}
 			animate={lifted ? LIFTED : GROW_TO}

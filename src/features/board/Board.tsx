@@ -1,7 +1,7 @@
 import { AnimatePresence, motionValue, type MotionValue } from "motion/react";
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from "react";
 import { flushSync } from "react-dom";
-import { formatOf, sideAt } from "../../lib/formats";
+import { widthOf, type Column } from "../../lib/columns";
 import type { Idea } from "../../lib/record";
 import { columnOrder } from "../../lib/tree";
 import { useFlowStore } from "../../stores/flow";
@@ -20,18 +20,29 @@ import { useLinkDrag } from "./useLinkDrag";
 import { useReorder, type ReorderLive } from "./useReorder";
 
 const EMPTY_IDEAS: Idea[] = [];
-const EMPTY_COLUMNS: string[] = [];
+const EMPTY_COLUMNS: Column[] = [];
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 const rootFontSize = () => parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
 
 export function Board() {
 	const ideas = useFlowStore(state => state.record?.ideas ?? EMPTY_IDEAS);
-	const labels = useFlowStore(state => state.record?.columns ?? EMPTY_COLUMNS);
-	const format = formatOf(useFlowStore(state => state.record?.format));
+	const columnList = useFlowStore(state => state.record?.columns ?? EMPTY_COLUMNS);
 	const rev = useFlowStore(state => state.rev);
 	const editing = useUIStore(state => state.editing);
 	const columnWidth = useUIStore(state => state.columnWidth);
-	const columns = labels.length;
+	const columns = columnList.length;
+
+	// Column offsets and widths in units of one speech column; cross-ex columns are narrower.
+	const geometry = useMemo(() => {
+		const widths = columnList.map(widthOf);
+		const lefts: number[] = [];
+		let total = 0;
+		for (const width of widths) {
+			lefts.push(total);
+			total += width;
+		}
+		return { widths, lefts, total };
+	}, [columnList]);
 
 	const scrollerRef = useRef<HTMLDivElement>(null);
 	const bodyRef = useRef<HTMLDivElement>(null);
@@ -39,8 +50,8 @@ export function Board() {
 	const [rem] = useState(rootFontSize);
 	const [hovered, setHovered] = useState<string | null>(null);
 
-	// Every visit starts with the columns filling the board; pinching picks a width of its own.
-	const fitRem = viewport.width / rem / Math.max(columns, 1);
+	// Every visit starts with the columns filling the board (unless they would get too narrow to read); pinching picks a width of its own.
+	const fitRem = Math.max(SIZES.fitMin, viewport.width / rem / Math.max(geometry.total, 1));
 	const columnRem = clamp(columnWidth ?? fitRem, SIZES.minColumn, SIZES.maxColumn);
 	const metrics = useMemo(() => toMetrics(columnRem, rem), [columnRem, rem]);
 
@@ -134,7 +145,7 @@ export function Board() {
 		return () => observer.disconnect();
 	}, []);
 
-	useColumnZoom(scrollerRef, columnRem, fitRem, columns, rem);
+	useColumnZoom(scrollerRef, columnRem, fitRem, geometry.total, rem);
 
 	// Keep the idea being edited in view, using its final position rather than a mid-animation one.
 	useEffect(() => {
@@ -145,8 +156,8 @@ export function Board() {
 		const margin = 2 * rem;
 		const top = placement.y + header;
 		const bottom = top + placement.height;
-		const left = placement.col * metrics.column;
-		const right = left + metrics.column;
+		const left = geometry.lefts[placement.col] * metrics.column;
+		const right = left + geometry.widths[placement.col] * metrics.column;
 		let scrollTop = scroller.scrollTop;
 		let scrollLeft = scroller.scrollLeft;
 		if (top - header - margin < scrollTop) scrollTop = top - header - margin;
@@ -165,9 +176,9 @@ export function Board() {
 		if (!column) return null;
 		const col = Number(column.dataset.col);
 		const body = bodyRef.current!.getBoundingClientRect();
-		const x = clientX - body.left - col * metrics.column;
+		const x = clientX - body.left - geometry.lefts[col] * metrics.column;
 		const y = clientY - body.top;
-		if (x < metrics.column - metrics.padRight) return null;
+		if (x < geometry.widths[col] * metrics.column - metrics.padRight) return null;
 		for (const [id, placement] of layout.placements) if (placement.col === col && y >= placement.y && y <= placement.y + placement.height) return id;
 		return null;
 	};
@@ -182,7 +193,6 @@ export function Board() {
 	const header = SIZES.header * rem;
 	const bodyHeight = Math.max(layout.height + SIZES.tail * rem, viewport.height - header);
 	const linkSource = linkDrag ? layout.placements.get(linkDrag.sourceId) : undefined;
-	const sides = useMemo(() => labels.map((_, col) => sideAt(format, col)), [labels, format]);
 
 	const style = {
 		"--col-w": `${columnRem}rem`,
@@ -193,7 +203,7 @@ export function Board() {
 		"--cell-pad-x": `${SIZES.cellPadX}rem`,
 		"--cell-font": `${SIZES.font}rem`,
 		"--cell-line": SIZES.line,
-		width: `${columnRem * columns}rem`
+		width: `${columnRem * geometry.total}rem`
 	} as CSSProperties;
 
 	return (
@@ -201,8 +211,8 @@ export function Board() {
 			<IdeaMenu triggerRef={scrollerRef} render={<div className={styles.scroller} />}>
 				<div className={styles.canvas} style={style} data-dragging={linkDrag || moving ? "" : undefined}>
 					<header className={styles.header}>
-						{labels.map((label, col) => (
-							<ColumnLabel key={col} col={col} label={label} side={sides[col]} />
+						{columnList.map((column, col) => (
+							<ColumnLabel key={col} col={col} label={column.label} side={column.side} span={geometry.widths[col]} />
 						))}
 					</header>
 
@@ -216,14 +226,14 @@ export function Board() {
 						}}
 						onPointerLeave={() => setHovered(null)}
 					>
-						{labels.map((_, col) => (
+						{columnList.map((column, col) => (
 							<div
 								key={col}
 								className={styles.column}
 								data-col={col}
-								data-side={sides[col]}
+								data-side={column.side ?? "cross"}
 								data-drop={linkDrag?.target?.kind === "col" && linkDrag.target.col === col ? "" : undefined}
-								style={{ left: `calc(${col} * var(--col-w))` }}
+								style={{ left: `calc(${geometry.lefts[col]} * var(--col-w))`, width: `calc(${geometry.widths[col]} * var(--col-w))` }}
 								onMouseDown={event => {
 									if (event.button !== 0 || event.target !== event.currentTarget) return;
 									event.preventDefault();
@@ -232,17 +242,19 @@ export function Board() {
 							/>
 						))}
 
-						<Arrows ideas={shown} layout={layout} metrics={metrics} focus={linkDrag?.sourceId ?? moving?.id ?? hovered ?? editing?.id ?? null} />
+						<Arrows ideas={shown} layout={layout} metrics={metrics} lefts={geometry.lefts} widths={geometry.widths} focus={linkDrag?.sourceId ?? moving?.id ?? hovered ?? editing?.id ?? null} />
 
 						<AnimatePresence>
-							{labels.flatMap((_, col) =>
+							{columnList.flatMap((column, col) =>
 								columnOrder(shown, col).map(({ idea }) => {
 									const placement = layout.placements.get(idea.id)!;
 									return (
 										<IdeaCell
 											key={idea.id}
 											idea={idea}
-											side={sides[col]}
+											side={column.side}
+											left={geometry.lefts[col]}
+											span={geometry.widths[col]}
 											depth={placement.depth}
 											y={placement.y}
 											caret={editing?.id === idea.id ? editing.caret : null}
@@ -259,7 +271,13 @@ export function Board() {
 						</AnimatePresence>
 
 						{linkDrag && linkSource && (
-							<DragArrow sx={(linkSource.col + 1) * metrics.column - metrics.padRight + 0.25 * rem} sy={linkSource.y + metrics.anchor} tx={linkDrag.x} ty={linkDrag.y} rem={rem} />
+							<DragArrow
+								sx={(geometry.lefts[linkSource.col] + geometry.widths[linkSource.col]) * metrics.column - metrics.padRight + 0.25 * rem}
+								sy={linkSource.y + metrics.anchor}
+								tx={linkDrag.x}
+								ty={linkDrag.y}
+								rem={rem}
+							/>
 						)}
 					</div>
 				</div>

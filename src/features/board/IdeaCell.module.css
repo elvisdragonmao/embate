@@ -23,6 +23,10 @@
 	--col-bg: var(--neg-bg);
 }
 
+.cell[data-side="cross"] {
+	--col-bg: var(--cross-bg);
+}
+
 .cell:hover {
 	background: color-mix(in oklab, var(--tint) var(--tint-strength), color-mix(in oklab, var(--ctp-text) 5%, var(--col-bg)));
 }

@@ -37,10 +37,13 @@ interface ArrowsProps {
 	ideas: Idea[];
 	layout: Layout;
 	metrics: Metrics;
+	/** Column offsets and widths, in units of one speech column. */
+	lefts: number[];
+	widths: number[];
 	focus: string | null;
 }
 
-export const Arrows = memo(function Arrows({ ideas, layout, metrics, focus }: ArrowsProps) {
+export const Arrows = memo(function Arrows({ ideas, layout, metrics, lefts, widths, focus }: ArrowsProps) {
 	const thread = useMemo(() => threadOf(ideas, focus), [ideas, focus]);
 	const byId = useMemo(() => new Map(ideas.map(idea => [idea.id, idea])), [ideas]);
 
@@ -56,8 +59,8 @@ export const Arrows = memo(function Arrows({ ideas, layout, metrics, focus }: Ar
 						key={idea.id}
 						fromId={source.id}
 						toId={idea.id}
-						fromCol={from.col}
-						toCol={to.col}
+						startX={(lefts[from.col] + widths[from.col]) * metrics.column - metrics.padRight + 0.25 * metrics.rem}
+						endX={lefts[to.col] * metrics.column + metrics.padLeft - 0.0625 * metrics.rem}
 						fromY={from.y}
 						toY={to.y}
 						toDepth={to.depth}
@@ -74,8 +77,9 @@ export const Arrows = memo(function Arrows({ ideas, layout, metrics, focus }: Ar
 interface ArrowProps {
 	fromId: string;
 	toId: string;
-	fromCol: number;
-	toCol: number;
+	/** Where the arrow leaves the source column and where it reaches the target column (before indentation). */
+	startX: number;
+	endX: number;
 	fromY: number;
 	toY: number;
 	toDepth: number;
@@ -84,16 +88,16 @@ interface ArrowProps {
 	active: boolean;
 }
 
-const Arrow = memo(function Arrow({ fromId, toId, fromCol, toCol, fromY, toY, toDepth, metrics, color, active }: ArrowProps) {
+const Arrow = memo(function Arrow({ fromId, toId, startX, endX, fromY, toY, toDepth, metrics, color, active }: ArrowProps) {
 	const { yOf, xOf } = useBoard();
 	const sourceY = yOf(fromId, fromY);
 	const targetY = yOf(toId, toY);
 	const targetX = xOf(toId, toDepth);
-	const { column, padLeft, padRight, anchor, rem } = metrics;
+	const { anchor, rem } = metrics;
 
 	const [hover, setHover] = useState(false);
-	const sx = (fromCol + 1) * column - padRight + 0.25 * rem;
-	const targetLeft = toCol * column + padLeft - 0.0625 * rem;
+	const sx = startX;
+	const targetLeft = endX;
 	const d = useTransform([sourceY, targetY, targetX], ([sy, ty, tx]: number[]) => arrowPath(sx, sy + anchor, targetLeft + tx, ty + anchor, rem));
 	// The curve is symmetric, so its midpoint is the midpoint of its ends.
 	const midX = useTransform(targetX, tx => (sx + targetLeft + tx) / 2);
