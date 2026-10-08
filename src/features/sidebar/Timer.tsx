@@ -64,7 +64,7 @@ export function Timer() {
 				</Hint>
 			</div>
 
-			<div className={styles.track} role="progressbar" aria-valuemin={0} aria-valuemax={duration} aria-valuenow={Math.min(spent, duration)}>
+			<div className={styles.track} role="progressbar" aria-label="Speech time" aria-valuemin={0} aria-valuemax={duration} aria-valuenow={Math.min(spent, duration)}>
 				<div ref={barRef} className={styles.bar} style={{ transform: `scaleX(${Math.min(1, spent / duration)})` }} />
 			</div>
 
