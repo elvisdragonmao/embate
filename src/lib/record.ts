@@ -1,16 +1,15 @@
+import { FORMAT_IDS, formatOf, type FormatId, type Side } from "./formats";
 import { createId } from "./id";
 
-export const SPEECHES = ["AC", "NC", "AR", "NR", "AS", "NS", "AFF", "NFF"] as const;
-export type Speech = (typeof SPEECHES)[number];
-
-export const sideOf = (col: number) => (col % 2 === 0 ? "aff" : "neg");
+/** Hard cap on columns, so a malformed upload can't create thousands. */
+export const MAX_COLUMNS = 16;
 
 export const IDEA_COLORS = ["red", "peach", "yellow", "green", "blue", "mauve"] as const;
 export type IdeaColor = (typeof IDEA_COLORS)[number];
 
 export interface Idea {
 	id: string;
-	/** Index into SPEECHES. */
+	/** Column (speech) index. */
 	col: number;
 	/** Parent idea in the same column, for sub-points. */
 	parent: string | null;
@@ -21,11 +20,22 @@ export interface Idea {
 	color: IdeaColor | null;
 }
 
+/** A countdown that survives reloads: time spent before the current run, plus the run's wall-clock start. */
+export interface Clock {
+	duration: number;
+	elapsed: number;
+	startedAt: number | null;
+}
+
 export interface FlowRecord {
 	app: "embate";
 	version: 1;
 	id: string;
-	format: "pf";
+	format: FormatId;
+	/** Column labels; editable, initialised from the format's speeches. */
+	columns: string[];
+	/** Prep time per side for formats that have it. */
+	prep: Record<Side, Clock>;
 	title: string;
 	createdAt: number;
 	updatedAt: number;
@@ -33,9 +43,24 @@ export interface FlowRecord {
 	ideas: Idea[];
 }
 
-export function createRecord(): FlowRecord {
+export const prepClock = (minutes: number | null): Clock => ({ duration: (minutes ?? 2) * 60_000, elapsed: 0, startedAt: null });
+
+export function createRecord(formatId: FormatId = "pf"): FlowRecord {
 	const now = Date.now();
-	return { app: "embate", version: 1, id: createId(), format: "pf", title: "", createdAt: now, updatedAt: now, note: "", ideas: [] };
+	const format = formatOf(formatId);
+	return {
+		app: "embate",
+		version: 1,
+		id: createId(),
+		format: format.id,
+		columns: format.speeches.map(speech => speech.label),
+		prep: { aff: prepClock(format.prep), neg: prepClock(format.prep) },
+		title: "",
+		createdAt: now,
+		updatedAt: now,
+		note: "",
+		ideas: []
+	};
 }
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
@@ -50,7 +75,7 @@ export function normalizeRecord(input: unknown): FlowRecord | null {
 	const raw = input.ideas.filter(isObject).flatMap(item => {
 		const id = str(item.id);
 		const col = num(item.col, -1);
-		if (!id || !Number.isInteger(col) || col < 0 || col >= SPEECHES.length) return [];
+		if (!id || !Number.isInteger(col) || col < 0 || col >= MAX_COLUMNS) return [];
 		const color = IDEA_COLORS.includes(item.color as IdeaColor) ? (item.color as IdeaColor) : null;
 		return [{ id, col, parent: str(item.parent) || null, from: str(item.from) || null, text: str(item.text), color }];
 	});
@@ -73,11 +98,25 @@ export function normalizeRecord(input: unknown): FlowRecord | null {
 		return { ...idea, parent: parent?.id ?? null, from: from && from.col < idea.col ? from.id : null };
 	});
 
+	const format = formatOf(FORMAT_IDS.includes(input.format as FormatId) ? (input.format as FormatId) : "pf");
+	const used = ideas.reduce((max, idea) => Math.max(max, idea.col + 1), 0);
+	const labels = Array.isArray(input.columns) ? input.columns.slice(0, MAX_COLUMNS).map(label => str(label)) : [];
+	const columns = Array.from({ length: Math.max(labels.length || format.speeches.length, used) }, (_, col) => labels[col] ?? format.speeches[col]?.label ?? `${col + 1}`);
+	const prep = isObject(input.prep) ? input.prep : {};
+	const clock = (value: unknown): Clock => {
+		const fallback = prepClock(format.prep);
+		if (!isObject(value)) return fallback;
+		const startedAt = num(value.startedAt, NaN);
+		return { duration: Math.max(1000, num(value.duration, fallback.duration)), elapsed: Math.max(0, num(value.elapsed, 0)), startedAt: Number.isNaN(startedAt) ? null : startedAt };
+	};
+
 	return {
 		app: "embate",
 		version: 1,
 		id: str(input.id) || createId(),
-		format: "pf",
+		format: format.id,
+		columns,
+		prep: { aff: clock(prep.aff), neg: clock(prep.neg) },
 		title: str(input.title),
 		createdAt: num(input.createdAt, now),
 		updatedAt: num(input.updatedAt, now),
@@ -87,3 +126,5 @@ export function normalizeRecord(input: unknown): FlowRecord | null {
 }
 
 export const isBlank = (markdown: string) => markdown.replace(/\\$/gm, "").trim() === "";
+
+export const clockElapsed = (clock: Pick<Clock, "elapsed" | "startedAt">, now = Date.now()) => clock.elapsed + (clock.startedAt === null ? 0 : now - clock.startedAt);

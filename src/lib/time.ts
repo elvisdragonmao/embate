@@ -6,6 +6,12 @@ export function formatClock(totalSeconds: number) {
 	return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+/** Remaining time of a countdown; past zero it counts the overrun with a leading minus. */
+export function formatCountdown(remainingMs: number) {
+	if (remainingMs > 0) return formatClock(Math.ceil(remainingMs / 1000));
+	return `${remainingMs <= -1000 ? "−" : ""}${formatClock(Math.floor(-remainingMs / 1000))}`;
+}
+
 /** Accepts "4", "4:30", "430", "0:45" and returns milliseconds, or null when unparseable. */
 export function parseClock(input: string): number | null {
 	const value = input.trim();
