@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+# Flows live in each visitor's own browser, so their URLs have nothing to index.
+Disallow: /f/
+
+Sitemap: https://debate.emtech.cc/sitemap.xml
