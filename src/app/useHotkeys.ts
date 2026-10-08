@@ -25,7 +25,7 @@ export function useHotkeys() {
 			if (mod && !event.altKey) {
 				if (event.key === "/" || event.code === "Slash") {
 					handled();
-					ui.setHelpOpen(!ui.helpOpen);
+					ui.setInfoOpen(!ui.infoOpen);
 				} else if (event.code === "KeyO" && !event.shiftKey) {
 					handled();
 					ui.setOpenMenuOpen(!ui.openMenuOpen);
@@ -61,7 +61,7 @@ export function useHotkeys() {
 				return;
 			}
 
-			if (event.code === "Space" && !mod && !event.altKey && !event.shiftKey && !isInteractive(event.target) && !ui.helpOpen && !ui.openMenuOpen) {
+			if (event.code === "Space" && !mod && !event.altKey && !event.shiftKey && !isInteractive(event.target) && !ui.infoOpen && !ui.openMenuOpen) {
 				handled();
 				timer.toggle();
 			}

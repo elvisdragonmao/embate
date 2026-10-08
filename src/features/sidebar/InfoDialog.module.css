@@ -44,17 +44,41 @@
 .header {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 0.375rem;
 	padding: 1rem 1rem 0 1.5rem;
 }
 
-.title {
+.credit {
 	margin: 0;
-	font-size: 1.125rem;
+	font-size: 0.9375rem;
+	font-weight: 400;
+	color: var(--text-muted);
+}
+
+.credit strong {
 	font-weight: 600;
+	color: var(--text);
+}
+
+.github {
+	display: grid;
+	place-items: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 999rem;
+	color: var(--text-muted);
+	transition:
+		background-color var(--dur-fast) var(--ease-out),
+		color var(--dur-fast) var(--ease-out);
+}
+
+.github:hover {
+	background: var(--hover);
+	color: var(--text);
 }
 
 .close {
+	margin-left: auto;
 	display: grid;
 	place-items: center;
 	width: 2rem;

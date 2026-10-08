@@ -15,12 +15,12 @@ interface UIState {
 	editing: Editing | null;
 	/** Column width in rem chosen by pinching; null fits all columns to the viewport, which is how every visit starts. */
 	columnWidth: number | null;
-	helpOpen: boolean;
+	infoOpen: boolean;
 	openMenuOpen: boolean;
 	edit: (id: string, caret?: Caret) => void;
 	stopEditing: () => void;
 	setColumnWidth: (rem: number | null) => void;
-	setHelpOpen: (open: boolean) => void;
+	setInfoOpen: (open: boolean) => void;
 	setOpenMenuOpen: (open: boolean) => void;
 }
 
@@ -35,7 +35,7 @@ function dropIfBlank(id: string) {
 export const useUIStore = create<UIState>()((set, get) => ({
 	editing: null,
 	columnWidth: null,
-	helpOpen: false,
+	infoOpen: false,
 	openMenuOpen: false,
 	edit: (id, caret = { at: "end" }) => {
 		const previous = get().editing;
@@ -49,6 +49,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
 		dropIfBlank(previous.id);
 	},
 	setColumnWidth: columnWidth => set({ columnWidth }),
-	setHelpOpen: helpOpen => set({ helpOpen }),
+	setInfoOpen: infoOpen => set({ infoOpen }),
 	setOpenMenuOpen: openMenuOpen => set({ openMenuOpen })
 }));

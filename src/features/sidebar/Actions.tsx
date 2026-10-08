@@ -1,12 +1,12 @@
-import { DownloadSimpleIcon, FolderOpenIcon, QuestionIcon } from "@phosphor-icons/react";
+import { DownloadSimpleIcon, FolderOpenIcon, InfoIcon } from "@phosphor-icons/react";
 import { useUIStore } from "../../stores/ui";
 import styles from "./Actions.module.css";
 import { downloadCurrent } from "./download";
-import { HelpDialog } from "./HelpDialog";
+import { InfoDialog } from "./InfoDialog";
 import { OpenMenu } from "./OpenMenu";
 
 export function Actions() {
-	const setHelpOpen = useUIStore(state => state.setHelpOpen);
+	const setInfoOpen = useUIStore(state => state.setInfoOpen);
 
 	return (
 		<nav className={styles.actions}>
@@ -20,11 +20,11 @@ export function Actions() {
 				<DownloadSimpleIcon size="1.25rem" />
 				<span>Download</span>
 			</button>
-			<button type="button" className={styles.action} onClick={() => setHelpOpen(true)}>
-				<QuestionIcon size="1.25rem" />
-				<span>Help</span>
+			<button type="button" className={styles.action} onClick={() => setInfoOpen(true)}>
+				<InfoIcon size="1.25rem" />
+				<span>Info</span>
 			</button>
-			<HelpDialog />
+			<InfoDialog />
 		</nav>
 	);
 }

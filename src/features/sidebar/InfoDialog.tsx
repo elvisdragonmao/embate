@@ -1,9 +1,9 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { XIcon } from "@phosphor-icons/react";
+import { GithubLogoIcon, XIcon } from "@phosphor-icons/react";
 import { shortcuts } from "../../app/shortcuts";
 import { Keys } from "../../components/Hint";
 import { useUIStore } from "../../stores/ui";
-import styles from "./HelpDialog.module.css";
+import styles from "./InfoDialog.module.css";
 
 const usage = [
 	"Click empty space in a speech column to add a point. Drag a point up or down to move it with its sub-points; drag sideways to nest it.",
@@ -11,8 +11,10 @@ const usage = [
 	"Right-click a point to color, unlink, or delete it.",
 	"Click a speech label to rename it. Pick the format under the title to switch speeches, quick timers, and prep.",
 	"Pinch on the trackpad to widen or narrow the columns; pinch back to the edges to fit them again.",
-	"Everything saves in this browser as you type. Download exports a JSON file that Open can upload again."
+	"Everything saves in this browser as you type. Download exports a JSON file that Open can upload again; Open → Demo loads a sample round."
 ];
+
+const REPOSITORY = "https://github.com/elvisdragonmao/embate";
 
 const groups: { title: string; rows: [string, string[]][] }[] = [
 	{
@@ -54,14 +56,14 @@ const groups: { title: string; rows: [string, string[]][] }[] = [
 			["Open", shortcuts.open],
 			["Download", shortcuts.download],
 			["Undo or redo points", [...shortcuts.undo, "/", ...shortcuts.redo.slice(1)]],
-			["Help", shortcuts.help]
+			["Info", shortcuts.info]
 		]
 	}
 ];
 
-export function HelpDialog() {
-	const open = useUIStore(state => state.helpOpen);
-	const setOpen = useUIStore(state => state.setHelpOpen);
+export function InfoDialog() {
+	const open = useUIStore(state => state.infoOpen);
+	const setOpen = useUIStore(state => state.setInfoOpen);
 
 	return (
 		<Dialog.Root open={open} onOpenChange={setOpen}>
@@ -69,7 +71,12 @@ export function HelpDialog() {
 				<Dialog.Backdrop className={styles.backdrop} />
 				<Dialog.Popup className={styles.popup}>
 					<header className={styles.header}>
-						<Dialog.Title className={styles.title}>Help</Dialog.Title>
+						<Dialog.Title className={styles.credit}>
+							Made by <strong>Elvis Mao</strong>
+						</Dialog.Title>
+						<a className={styles.github} href={REPOSITORY} target="_blank" rel="noreferrer" aria-label="embate on GitHub">
+							<GithubLogoIcon size="1.125rem" weight="fill" />
+						</a>
 						<Dialog.Close className={styles.close} aria-label="Close">
 							<XIcon size="1rem" weight="bold" />
 						</Dialog.Close>

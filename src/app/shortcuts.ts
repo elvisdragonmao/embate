@@ -1,7 +1,7 @@
 import { keyLabels as k } from "../lib/platform";
 
 export const shortcuts = {
-	help: [k.mod, "/"],
+	info: [k.mod, "/"],
 	open: [k.mod, "O"],
 	download: [k.mod, "S"],
 	undo: [k.mod, "Z"],
