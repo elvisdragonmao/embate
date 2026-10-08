@@ -1,6 +1,6 @@
 # embate
 
-[debate.emtech.cc](https://debate.emtech.cc)
+[debate.emtech.cc](https://debate.emtech.cc) · [Try the demo round](https://debate.emtech.cc/f/demo)
 
 ![embate showing the demo Public Forum round in dark mode](.github/screenshot.webp)
 
