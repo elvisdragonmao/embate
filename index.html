@@ -3,20 +3,97 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>embate · Debate flow for judges</title>
+		<meta
+			name="description"
+			content="embate is a free flowing tool for debate judges. Flow Public Forum, Lincoln–Douglas, Policy, British Parliamentary, World Schools and more with linked arguments, speech and prep timers, and notes, saved in your browser."
+		/>
+		<meta name="author" content="Elvis Mao" />
+		<meta name="robots" content="index, follow, max-image-preview:large" />
+		<link rel="canonical" href="https://debate.emtech.cc/" />
+
 		<meta name="color-scheme" content="light dark" />
 		<meta name="theme-color" media="(prefers-color-scheme: light)" content="oklch(93.35% 0.0087 264.52)" />
 		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="oklch(21.55% 0.0254 284.06)" />
-		<title>embate</title>
+		<meta name="application-name" content="embate" />
+		<meta name="apple-mobile-web-app-title" content="embate" />
+
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/site.webmanifest" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="embate" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:url" content="https://debate.emtech.cc/" />
+		<meta property="og:title" content="embate · Debate flow for judges" />
+		<meta property="og:description" content="Flow debate rounds with linked arguments across every speech, speech and prep timers, and notes. Free, in your browser." />
+		<meta property="og:image" content="https://debate.emtech.cc/og.jpg" />
+		<meta property="og:image:type" content="image/jpeg" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="embate showing a Public Forum round flowed across eight speech columns, with timers and notes in the sidebar" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="embate · Debate flow for judges" />
+		<meta name="twitter:description" content="Flow debate rounds with linked arguments across every speech, speech and prep timers, and notes. Free, in your browser." />
+		<meta name="twitter:image" content="https://debate.emtech.cc/og.jpg" />
+		<meta name="twitter:image:alt" content="embate showing a Public Forum round flowed across eight speech columns, with timers and notes in the sidebar" />
+
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebApplication",
+				"name": "embate",
+				"alternateName": "embate debate flow",
+				"url": "https://debate.emtech.cc/",
+				"description": "A free flowing tool for debate judges: linked arguments across every speech, speech and prep timers, and notes, saved in the browser.",
+				"applicationCategory": "EducationalApplication",
+				"operatingSystem": "Any",
+				"browserRequirements": "Requires JavaScript",
+				"inLanguage": "en",
+				"isAccessibleForFree": true,
+				"image": "https://debate.emtech.cc/og.jpg",
+				"screenshot": "https://debate.emtech.cc/og.jpg",
+				"offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+				"featureList": [
+					"Flow Public Forum, Lincoln–Douglas, Policy, British Parliamentary, World Schools, Asian Parliamentary and Oregon-Oxford rounds",
+					"Link responses to the arguments they answer across speeches",
+					"Countdown and stopwatch speech timer with prep clocks for each side",
+					"Markdown notes and points, colors, drag to reorder",
+					"Autosave in the browser and JSON export"
+				],
+				"author": { "@type": "Person", "name": "Elvis Mao", "url": "https://github.com/elvisdragonmao" },
+				"codeRepository": "https://github.com/elvisdragonmao/embate",
+				"license": "https://www.apache.org/licenses/LICENSE-2.0"
+			}
+		</script>
+
+		<!-- Fonts load without blocking the first paint; text shows in the system font until they arrive. -->
 		<link rel="preconnect" href="https://font.emtech.cc" crossorigin />
-		<link rel="stylesheet" href="https://font.emtech.cc/css/IBMPlexSansTC/400" />
-		<link rel="stylesheet" href="https://font.emtech.cc/css/IBMPlexSansTC/500" />
-		<link rel="stylesheet" href="https://font.emtech.cc/css/IBMPlexSansTC/600" />
-		<link rel="stylesheet" href="https://font.emtech.cc/css/JetBrainsMono/400" />
-		<link rel="stylesheet" href="https://font.emtech.cc/css/JetBrainsMono/500" />
+		<link rel="stylesheet" href="https://font.emtech.cc/css/IBMPlexSansTC/400" media="print" onload="this.media = 'all'" />
+		<link rel="stylesheet" href="https://font.emtech.cc/css/IBMPlexSansTC/500" media="print" onload="this.media = 'all'" />
+		<link rel="stylesheet" href="https://font.emtech.cc/css/IBMPlexSansTC/600" media="print" onload="this.media = 'all'" />
+		<link rel="stylesheet" href="https://font.emtech.cc/css/JetBrainsMono/400" media="print" onload="this.media = 'all'" />
+		<link rel="stylesheet" href="https://font.emtech.cc/css/JetBrainsMono/500" media="print" onload="this.media = 'all'" />
 	</head>
 	<body>
 		<div id="root"></div>
+		<noscript>
+			<main style="max-width: 40rem; margin: 4rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; line-height: 1.6">
+				<h1>embate · Debate flow for judges</h1>
+				<p>
+					embate is a free flowing tool for debate judges. Each speech gets a column; write arguments as you hear them, nest sub-points, and draw arrows from every response to the argument it answers.
+					A countdown or stopwatch times speeches, prep clocks track each side, and notes hold your decision.
+				</p>
+				<p>It supports Public Forum, Lincoln–Douglas, Policy, British Parliamentary, World Schools, Asian Parliamentary and Oregon-Oxford rounds, and saves everything in your browser.</p>
+				<p>
+					embate needs JavaScript to run. The source is on
+					<a href="https://github.com/elvisdragonmao/embate">GitHub</a>
+					.
+				</p>
+			</main>
+		</noscript>
 		<script type="module" src="/src/main.tsx"></script>
 	</body>
 </html>
