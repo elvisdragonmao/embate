@@ -29,4 +29,4 @@ pnpm format       # Prettier
 
 ## 授權條款
 
-本專案採用[你他媽的想幹嘛就幹嘛公眾授權條款](https://www.wtfpl.net/)授權，詳情請參閱 [LICENSE](./LICENSE) 檔案。
+本專案採用 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) 授權，詳情請參閱 [LICENSE](./LICENSE) 檔案。
