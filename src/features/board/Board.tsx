@@ -140,7 +140,7 @@ export function Board() {
 			if (!event.ctrlKey) return;
 			event.preventDefault();
 			const delta = clamp(event.deltaY, -30, 30);
-			zoomTo(columnRemRef.current * Math.exp(-delta * 0.012), event.clientX);
+			zoomTo(columnRemRef.current * Math.exp(-delta * 0.01), event.clientX);
 		};
 		let gestureBase = columnRemRef.current;
 		const onGestureStart = (event: Event) => {
@@ -152,10 +152,16 @@ export function Board() {
 			const gesture = event as Event & { scale: number; clientX: number };
 			zoomTo(gestureBase * gesture.scale, gesture.clientX);
 		};
+		// Pinching anywhere else would zoom the whole page instead.
+		const blockPageZoom = (event: WheelEvent) => {
+			if (event.ctrlKey) event.preventDefault();
+		};
+		window.addEventListener("wheel", blockPageZoom, { passive: false });
 		scroller.addEventListener("wheel", onWheel, { passive: false });
 		scroller.addEventListener("gesturestart", onGestureStart);
 		scroller.addEventListener("gesturechange", onGestureChange);
 		return () => {
+			window.removeEventListener("wheel", blockPageZoom);
 			scroller.removeEventListener("wheel", onWheel);
 			scroller.removeEventListener("gesturestart", onGestureStart);
 			scroller.removeEventListener("gesturechange", onGestureChange);

@@ -73,7 +73,12 @@ export const IdeaCell = memo(function IdeaCell({ idea, depth, y, caret, glide, e
 			exit={SHRINK}
 			transition={SPRING}
 			onMouseDown={event => {
-				if (event.button !== 0 || caret) return;
+				if (event.button !== 0) return;
+				if (caret) {
+					// Clicking the padding around the editor must not blur it.
+					if (!(event.target as Element).closest(".ProseMirror")) event.preventDefault();
+					return;
+				}
 				event.preventDefault();
 				useUIStore.getState().edit(idea.id, { at: "point", x: event.clientX, y: event.clientY });
 			}}
