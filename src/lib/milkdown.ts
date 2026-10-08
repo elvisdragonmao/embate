@@ -1,7 +1,7 @@
 import { defaultValueCtx, Editor, editorViewCtx, editorViewOptionsCtx, parserCtx, rootCtx, serializerCtx } from "@milkdown/kit/core";
 import { clipboard } from "@milkdown/kit/plugin/clipboard";
 import { history } from "@milkdown/kit/plugin/history";
-import { commonmark } from "@milkdown/kit/preset/commonmark";
+import { commonmark, emphasisSchema, strongSchema } from "@milkdown/kit/preset/commonmark";
 import { gfm, strikethroughSchema } from "@milkdown/kit/preset/gfm";
 import { toggleMark } from "@milkdown/kit/prose/commands";
 import { keymap } from "@milkdown/kit/prose/keymap";
@@ -10,6 +10,7 @@ import { Plugin } from "@milkdown/kit/prose/state";
 import type { DirectEditorProps, EditorView } from "@milkdown/kit/prose/view";
 import "@milkdown/kit/prose/view/style/prosemirror.css";
 import { $prose } from "@milkdown/kit/utils";
+import { isMac } from "./platform";
 
 type ViewOptions = Partial<Omit<DirectEditorProps, "state">>;
 
@@ -21,8 +22,13 @@ interface MarkdownEditorOptions {
 	viewOptions?: ViewOptions;
 }
 
-/** ⌘⇧X toggles strikethrough, alongside Milkdown's default ⌘⌥X. */
-const strikeShortcut = $prose(ctx => keymap({ "Mod-Shift-x": toggleMark(strikethroughSchema.type(ctx)) }));
+/** ⌘⇧X toggles strikethrough next to Milkdown's ⌘⌥X; on macOS, Ctrl+B and Ctrl+I work like ⌘B and ⌘I. */
+const extraShortcuts = $prose(ctx =>
+	keymap({
+		"Mod-Shift-x": toggleMark(strikethroughSchema.type(ctx)),
+		...(isMac ? { "Ctrl-b": toggleMark(strongSchema.type(ctx)), "Ctrl-i": toggleMark(emphasisSchema.type(ctx)) } : {})
+	})
+);
 
 const changes = (onChange: MarkdownEditorOptions["onChange"]) =>
 	$prose(
@@ -47,7 +53,7 @@ export function createMarkdownEditor({ root, value, onChange, viewOptions }: Mar
 		.use(gfm)
 		.use(history)
 		.use(clipboard)
-		.use(strikeShortcut)
+		.use(extraShortcuts)
 		.use(changes(onChange))
 		.create();
 }
