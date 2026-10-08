@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { createMarkdownEditor } from "../../lib/milkdown";
 import { useFlowStore } from "../../stores/flow";
 import prose from "../../styles/prose.module.css";
 import styles from "./Note.module.css";
@@ -24,19 +23,23 @@ function NoteEditor() {
 		let timer: ReturnType<typeof setTimeout> | undefined;
 		let flush = () => {};
 
-		const editor = createMarkdownEditor({
-			root,
-			value: record.note,
-			onChange: markdown => {
-				// Long notes are serialized at most a few times per second.
-				flush = () => useFlowStore.getState().setNote(record.id, markdown());
-				clearTimeout(timer);
-				timer = setTimeout(() => {
-					flush();
-					flush = () => {};
-				}, 250);
-			}
-		});
+		// Milkdown arrives in its own chunk, after the first paint.
+		const editor = import("../../lib/milkdown").then(({ createMarkdownEditor }) =>
+			createMarkdownEditor({
+				root,
+				label: "Notes",
+				value: record.note,
+				onChange: markdown => {
+					// Long notes are serialized at most a few times per second.
+					flush = () => useFlowStore.getState().setNote(record.id, markdown());
+					clearTimeout(timer);
+					timer = setTimeout(() => {
+						flush();
+						flush = () => {};
+					}, 250);
+				}
+			})
+		);
 		return () => {
 			clearTimeout(timer);
 			flush();

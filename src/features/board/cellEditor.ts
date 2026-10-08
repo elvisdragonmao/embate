@@ -12,7 +12,7 @@ type KeyHandler = (id: string, event: KeyboardEvent, view: EditorView) => boolea
  * its document synchronously, so typing straight after Enter or Tab never drops keystrokes while
  * a new editor boots, and the board stays light no matter how many ideas it holds.
  */
-class CellEditor {
+export class CellEditor {
 	readonly root = document.createElement("div");
 	private editor: Editor | null = null;
 	private ideaId: string | null = null;
@@ -27,6 +27,7 @@ class CellEditor {
 		this.root.className = prose.prose;
 		createMarkdownEditor({
 			root: this.root,
+			label: "Point",
 			value: "",
 			onChange: markdown => {
 				if (!this.swapping && this.ideaId) this.onChange(this.ideaId, markdown());

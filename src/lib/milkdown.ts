@@ -16,6 +16,8 @@ type ViewOptions = Partial<Omit<DirectEditorProps, "state">>;
 
 interface MarkdownEditorOptions {
 	root: HTMLElement;
+	/** Accessible name of the editable area. */
+	label: string;
 	value: string;
 	/** Called after every document change; serializing is deferred to the caller. */
 	onChange: (markdown: () => string, view: EditorView) => void;
@@ -42,12 +44,12 @@ const changes = (onChange: MarkdownEditorOptions["onChange"]) =>
 			})
 	);
 
-export function createMarkdownEditor({ root, value, onChange, viewOptions }: MarkdownEditorOptions) {
+export function createMarkdownEditor({ root, label, value, onChange, viewOptions }: MarkdownEditorOptions) {
 	return Editor.make()
 		.config(ctx => {
 			ctx.set(rootCtx, root);
 			ctx.set(defaultValueCtx, value);
-			if (viewOptions) ctx.update(editorViewOptionsCtx, previous => ({ ...previous, ...viewOptions }));
+			ctx.update(editorViewOptionsCtx, previous => ({ ...previous, ...viewOptions, attributes: { "aria-label": label } }));
 		})
 		.use(commonmark)
 		.use(gfm)

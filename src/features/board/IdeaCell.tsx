@@ -10,7 +10,7 @@ import { getIdea } from "../../stores/flow";
 import type { Caret } from "../../stores/ui";
 import prose from "../../styles/prose.module.css";
 import { SPRING, useBoard } from "./BoardContext";
-import { cellEditor } from "./cellEditor";
+import { loadCellEditor, loadedCellEditor } from "./editorLoader";
 import styles from "./IdeaCell.module.css";
 import { SIZES } from "./layout";
 
@@ -117,13 +117,34 @@ export const IdeaCell = memo(function IdeaCell({ idea, side, depth, y, caret, gl
 function EditorSlot({ id, caret }: { id: string; caret: Caret }) {
 	const ref = useRef<HTMLDivElement>(null);
 
+	const caretRef = useRef(caret);
+	caretRef.current = caret;
+
+	// Attach synchronously once the editor has loaded, so typing right after Enter or Tab is never dropped.
 	useLayoutEffect(() => {
-		cellEditor.attach(ref.current!, id, getIdea(id)?.text ?? "");
-		return () => cellEditor.detach(id);
+		const container = ref.current!;
+		const attach = (editor: NonNullable<ReturnType<typeof loadedCellEditor>>) => {
+			editor.attach(container, id, getIdea(id)?.text ?? "");
+			editor.focus(caretRef.current);
+		};
+		const ready = loadedCellEditor();
+		let cancelled = false;
+		if (ready) attach(ready);
+		else void loadCellEditor().then(editor => !cancelled && attach(editor));
+		return () => {
+			cancelled = true;
+			loadedCellEditor()?.detach(id);
+		};
 	}, [id]);
 
+	const placed = useRef(false);
 	useLayoutEffect(() => {
-		cellEditor.focus(caret);
+		// The attach above already placed the first caret.
+		if (!placed.current) {
+			placed.current = true;
+			return;
+		}
+		loadedCellEditor()?.focus(caret);
 	}, [caret]);
 
 	return <div ref={ref} />;

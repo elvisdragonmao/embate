@@ -10,8 +10,8 @@ import { Arrows, DragArrow } from "./Arrows";
 import styles from "./Board.module.css";
 import { boardState } from "./boardApi";
 import { BoardContext, type BoardContextValue } from "./BoardContext";
-import "./cellKeys";
 import { ColumnLabel } from "./ColumnLabel";
+import { loadCellEditor } from "./editorLoader";
 import { IdeaCell } from "./IdeaCell";
 import { IdeaMenu } from "./IdeaMenu";
 import { computeLayout, insertionAt, SIZES, toMetrics } from "./layout";
@@ -119,6 +119,9 @@ export function Board() {
 	const ready = useRef(false);
 	useEffect(() => {
 		ready.current = true;
+		// Fetch the editor once the board is on screen, so it is ready before the first click.
+		const idle = window.requestIdleCallback ?? ((callback: () => void) => window.setTimeout(callback, 200));
+		idle(() => void loadCellEditor());
 	}, []);
 
 	// Viewport size drives the fitted column width and the minimum canvas height.
