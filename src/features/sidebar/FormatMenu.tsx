@@ -1,11 +1,28 @@
 import { Menu } from "@base-ui/react/menu";
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react";
+import { isCross } from "../../lib/columns";
 import { FORMATS, formatOf, type FormatId } from "../../lib/formats";
 import { useFlowStore } from "../../stores/flow";
 import styles from "./FormatMenu.module.css";
 
 /** The round's format, under the title; picking another one renames the speech columns. */
 export function FormatMenu() {
+	const format = formatOf(useFlowStore(state => state.record?.format));
+	const cross = useFlowStore(state => state.record?.columns.some(isCross) ?? false);
+
+	return (
+		<div className={styles.row}>
+			<Picker />
+			{format.crossEx && (
+				<button type="button" className={styles.cross} aria-pressed={cross} onClick={() => useFlowStore.getState().setCrossEx(!cross)}>
+					{cross ? "with" : "no"} {format.crossEx.name}
+				</button>
+			)}
+		</div>
+	);
+}
+
+function Picker() {
 	const format = formatOf(useFlowStore(state => state.record?.format));
 
 	return (

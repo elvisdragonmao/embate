@@ -9,7 +9,7 @@ const usage = [
 	"Click empty space in a speech column to add a point. Drag a point up or down to move it with its sub-points; drag sideways to nest it.",
 	"Hover a point and click the arrow on its right to extend it into the next speech. Drag the arrow onto any later speech or point to link there. Click a link to remove it.",
 	"Right-click a point to color, unlink, or delete it.",
-	"Click a speech label to rename it. Pick the format under the title to switch speeches, quick timers, and prep.",
+	"Click a speech label to rename it. Pick the format under the title to switch speeches, quick timers, and prep; the button beside it adds or removes crossfire and cross-examination columns.",
 	"Pinch on the trackpad to widen or narrow the columns; pinch back to the edges to fit them again.",
 	"Everything saves in this browser as you type. Download exports a JSON file that Open can upload again; Open → Demo loads a sample round."
 ];
