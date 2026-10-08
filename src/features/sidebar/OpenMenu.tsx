@@ -78,7 +78,8 @@ function OpenMenuContent({ onDone }: { onDone: () => void }) {
 	};
 
 	const createNew = () => {
-		const record = createRecord();
+		// A judge usually flows a whole day in one format.
+		const record = createRecord(useFlowStore.getState().record?.format);
 		saveRecord(record);
 		queryClient.invalidateQueries({ queryKey: recordsKey });
 		navigate(`/f/${record.id}`);

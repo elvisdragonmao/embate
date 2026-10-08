@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { downloadCurrent } from "../features/sidebar/download";
+import { formatOf } from "../lib/formats";
 import { isComposing, isEditableTarget, isMac, isMod } from "../lib/platform";
 import { undoStructure } from "../stores/actions";
+import { useFlowStore } from "../stores/flow";
 import { useTimerStore } from "../stores/timer";
 import { useUIStore } from "../stores/ui";
-
-const QUICK: Record<string, number> = { Digit4: 4, Digit3: 3, Digit2: 2 };
 
 const isInteractive = (target: EventTarget | null) => target instanceof Element && target !== document.body && !!target.closest("button, a, input, textarea, select, [role], [contenteditable]");
 
@@ -49,9 +49,14 @@ export function useHotkeys() {
 				} else if (event.code === "KeyM") {
 					handled();
 					timer.toggleMode();
-				} else if (event.code in QUICK) {
+				} else if (/^Digit[1-9]$/.test(event.code)) {
 					handled();
-					timer.quickStart(QUICK[event.code] * 60_000);
+					timer.quickStart(Number(event.code.slice(5)) * 60_000);
+				} else if (event.code === "BracketLeft" || event.code === "BracketRight") {
+					const flow = useFlowStore.getState();
+					if (formatOf(flow.record?.format).prep === null) return;
+					handled();
+					flow.togglePrep(event.code === "BracketLeft" ? "aff" : "neg");
 				}
 				return;
 			}

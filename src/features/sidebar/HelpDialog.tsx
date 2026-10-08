@@ -6,10 +6,11 @@ import { useUIStore } from "../../stores/ui";
 import styles from "./HelpDialog.module.css";
 
 const usage = [
-	"Click empty space in a speech column to add a point.",
-	"Hover a point and click the arrow on its right to extend it into the next speech. Drag the arrow onto any later speech or point to link there.",
+	"Click empty space in a speech column to add a point. Drag a point up or down to move it with its sub-points; drag sideways to nest it.",
+	"Hover a point and click the arrow on its right to extend it into the next speech. Drag the arrow onto any later speech or point to link there. Click a link to remove it.",
 	"Right-click a point to color, unlink, or delete it.",
-	"Pinch on the trackpad to widen or narrow the columns. Double-click a speech label to fit them again.",
+	"Click a speech label to rename it. Pick the format under the title to switch speeches, quick timers, and prep.",
+	"Pinch on the trackpad to widen or narrow the columns; pinch back to the edges to fit them again.",
 	"Everything saves in this browser as you type. Download exports a JSON file that Open can upload again."
 ];
 
@@ -42,7 +43,9 @@ const groups: { title: string; rows: [string, string[]][] }[] = [
 			["Start or pause", shortcuts.timerToggle],
 			["Reset", shortcuts.timerReset],
 			["Countdown or stopwatch", shortcuts.timerMode],
-			["Start 4, 3 or 2 minutes", [shortcuts.quick4[0], "4 3 2"]]
+			["Start a 1–9 minute timer", shortcuts.quickStart],
+			["Start or pause aff prep", shortcuts.prepAff],
+			["Start or pause neg prep", shortcuts.prepNeg]
 		]
 	},
 	{

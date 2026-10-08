@@ -6,3 +6,10 @@
 	padding: 1.25rem 1rem 0.75rem;
 	background: var(--bg-sidebar);
 }
+
+.heading {
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+	margin-top: -0.75rem;
+}

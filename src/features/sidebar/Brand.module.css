@@ -1,0 +1,19 @@
+.brand {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	user-select: none;
+}
+
+.name {
+	font-family: var(--font-mono);
+	font-size: 0.875rem;
+	font-weight: 500;
+	letter-spacing: -0.02em;
+	color: var(--accent);
+}
+
+.tagline {
+	font-size: 0.75rem;
+	color: var(--text-faint);
+}
