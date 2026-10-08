@@ -1,0 +1,12 @@
+.workspace {
+	display: grid;
+	grid-template-columns: 16.5rem minmax(0, 1fr);
+	height: 100dvh;
+	overflow: hidden;
+}
+
+@media (max-width: 48rem) {
+	.workspace {
+		grid-template-columns: 15rem minmax(0, 1fr);
+	}
+}
