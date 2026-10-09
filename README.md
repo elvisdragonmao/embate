@@ -22,6 +22,7 @@ Everything saves to your browser's localStorage as you type. You can also downlo
 - The aff and neg prep clocks sit under the main timer; click the digits to change them, or press `⌥[` and `⌥]` to start or pause them.
 - Columns fill the board by default. Pinch on a trackpad to widen or narrow them.
 - `⌘/` opens Info, which lists every shortcut.
+- To flow a round from a transcript, click Copy AI prompt at the top of Info, paste the prompt and the transcript into an AI chat, save the JSON it returns as a `.json` file, and upload it from Open.
 
 ## Development
 
