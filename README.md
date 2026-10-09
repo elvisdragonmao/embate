@@ -15,8 +15,8 @@ Everything saves to your browser's localStorage as you type. You can also downlo
 - Click empty space in a column to add a point. `Enter` adds the next point, `Shift Enter` breaks the line, and `Tab` adds a sub-point (on a point you just added and left empty, `Tab` nests it under the one above).
 - Drag a point up or down to move it together with its sub-points; drag sideways to change how deep it's nested.
 - Hover a point, or the space to its right, to show its arrow. Click the arrow to extend the point into the next speech, or drag it onto any later speech or point to link there. `⌘ Enter` extends too. Click a link to remove it.
-- Points take Markdown and the usual shortcuts (`⌘B`, `⌘I`, `⌘⇧X`). Right-click a point to color, unlink or delete it.
-- Click a speech label to rename it. Click the format under the title to switch formats; the button beside it (with CF / no CF, with CX / no CX) adds or removes crossfire and cross-examination columns between the speeches.
+- Points take Markdown and the usual shortcuts (`⌘B`, `⌘I`, `⌘⇧X`). Typing `->` or `<-` makes an arrow (→ ←); `Backspace` right after undoes it. Right-click a point to color, unlink or delete it.
+- Click a speech label to rename it. Click the format under the title to switch formats; the button beside it (with CF / no CF, with CX / no CX) adds or removes crossfire and cross-examination columns between the speeches. In Public Forum, the next one (Aff first / Neg first) lets the neg speak first: the speeches trade places, and points stay where you wrote them.
 - The aff and neg prep clocks sit under the main timer; click the digits to change them, or press `⌥[` and `⌥]` to start or pause them.
 - Columns fill the board by default. Pinch on a trackpad to widen or narrow them.
 - `⌘/` opens Info, which lists every shortcut.
