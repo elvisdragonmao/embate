@@ -1,6 +1,6 @@
 import { Menu } from "@base-ui/react/menu";
 import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react";
-import { isCross } from "../../lib/columns";
+import { isCross, isFlipped } from "../../lib/columns";
 import { FORMATS, formatOf, type FormatId } from "../../lib/formats";
 import { useFlowStore } from "../../stores/flow";
 import styles from "./FormatMenu.module.css";
@@ -9,15 +9,24 @@ import styles from "./FormatMenu.module.css";
 export function FormatMenu() {
 	const format = formatOf(useFlowStore(state => state.record?.format));
 	const cross = useFlowStore(state => state.record?.columns.some(isCross) ?? false);
+	const flipped = useFlowStore(state => (state.record ? isFlipped(format, state.record.columns) : false));
 
 	return (
 		<div className={styles.row}>
 			<Picker />
-			{format.crossEx && (
-				<button type="button" className={styles.cross} aria-pressed={cross} onClick={() => useFlowStore.getState().setCrossEx(!cross)}>
-					{cross ? "with" : "no"} {format.crossEx.name}
-				</button>
-			)}
+			{/* The toggles wrap together under the name when the sidebar is narrow. */}
+			<div className={styles.toggles}>
+				{format.crossEx && (
+					<button type="button" className={styles.toggle} aria-pressed={cross} onClick={() => useFlowStore.getState().setCrossEx(!cross)}>
+						{cross ? "with" : "no"} {format.crossEx.name}
+					</button>
+				)}
+				{format.eitherFirst && (
+					<button type="button" className={styles.toggle} aria-pressed={flipped} onClick={() => useFlowStore.getState().setFlipped(!flipped)}>
+						{format.sideNames[flipped ? "neg" : "aff"]} first
+					</button>
+				)}
+			</div>
 		</div>
 	);
 }

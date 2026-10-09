@@ -1,5 +1,6 @@
 .row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.25rem;
 	margin-left: -0.375rem;
@@ -16,6 +17,7 @@
 	color: var(--accent);
 	font-size: 0.8125rem;
 	font-weight: 500;
+	white-space: nowrap;
 	transition: background-color var(--dur-fast) var(--ease-out);
 }
 
@@ -24,8 +26,17 @@
 	background: color-mix(in oklab, var(--accent) 10%, transparent);
 }
 
-.cross {
-	padding: 0.125rem 0.5rem;
+.toggles {
+	display: flex;
+	gap: 0.25rem;
+}
+
+.toggles:empty {
+	display: none;
+}
+
+.toggle {
+	padding: 0.125rem 0.375rem;
 	border: none;
 	border-radius: 999rem;
 	background: var(--hover);
@@ -39,17 +50,17 @@
 		transform var(--dur-fast) var(--ease-out);
 }
 
-.cross:hover {
+.toggle:hover {
 	background: var(--press);
 	color: var(--text-muted);
 }
 
-.cross[aria-pressed="true"] {
+.toggle[aria-pressed="true"] {
 	background: color-mix(in oklab, var(--accent) 12%, transparent);
 	color: var(--accent);
 }
 
-.cross:active {
+.toggle:active {
 	transform: scale(0.95);
 }
 
