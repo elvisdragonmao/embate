@@ -2,6 +2,7 @@ import { normalizeRecord, type FlowRecord } from "./record";
 
 const RECORD_PREFIX = "embate:flow:";
 const LAST_KEY = "embate:last";
+const WELCOMED_KEY = "embate:welcomed";
 
 export interface RecordSummary {
 	id: string;
@@ -66,3 +67,10 @@ export function listRecords(): RecordSummary[] {
 
 export const getLastId = () => read(LAST_KEY);
 export const setLastId = (id: string) => write(LAST_KEY, id);
+
+/** Read before the app opens a flow: a browser that has opened one before isn't on its first visit. */
+const returning = read(LAST_KEY) !== null;
+
+/** First visits get a welcome that offers the tour, once. */
+export const needsWelcome = () => !returning && read(WELCOMED_KEY) === null;
+export const setWelcomed = () => write(WELCOMED_KEY, "1");
