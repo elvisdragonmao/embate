@@ -105,14 +105,20 @@
 	overscroll-behavior: contain;
 }
 
-.prompt {
+.leads {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+}
+
+.lead {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem 0.875rem;
 }
 
-.copy {
+.leadButton {
 	display: flex;
 	flex-shrink: 0;
 	align-items: center;
@@ -132,15 +138,15 @@
 		transform var(--dur-fast) var(--ease-out);
 }
 
-.copy:hover {
+.leadButton:hover {
 	background: color-mix(in oklab, var(--accent) 18%, transparent);
 }
 
-.copy:active {
+.leadButton:active {
 	transform: scale(0.97);
 }
 
-.promptText {
+.leadText {
 	flex: 1 1 16rem;
 	margin: 0;
 	font-size: 0.8125rem;

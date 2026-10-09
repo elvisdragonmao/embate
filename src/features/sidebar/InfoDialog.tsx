@@ -1,10 +1,11 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { CheckIcon, CopyIcon, GithubLogoIcon, XIcon } from "@phosphor-icons/react";
+import { CheckIcon, CopyIcon, GithubLogoIcon, SignpostIcon, XIcon } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { shortcuts } from "../../app/shortcuts";
 import { Keys } from "../../components/Hint";
 import { transcriptPrompt } from "../../lib/prompt";
 import { useUIStore } from "../../stores/ui";
+import { useStartTour } from "../tour/useTour";
 import styles from "./InfoDialog.module.css";
 
 const usage = [
@@ -85,7 +86,10 @@ export function InfoDialog() {
 						</Dialog.Close>
 					</header>
 					<div className={styles.body}>
-						<PromptCopy />
+						<div className={styles.leads}>
+							<TourStart />
+							<PromptCopy />
+						</div>
 						<ol className={styles.usage}>
 							{usage.map(line => (
 								<li key={line}>{line}</li>
@@ -115,6 +119,28 @@ export function InfoDialog() {
 	);
 }
 
+/** Closes Info and walks through the app again on a practice round. */
+function TourStart() {
+	const startTour = useStartTour();
+
+	return (
+		<div className={styles.lead}>
+			<button
+				type="button"
+				className={styles.leadButton}
+				onClick={() => {
+					useUIStore.getState().setInfoOpen(false);
+					startTour();
+				}}
+			>
+				<SignpostIcon size="1rem" weight="bold" />
+				<span>Take the tour</span>
+			</button>
+			<p className={styles.leadText}>Walk through every part of embate on a practice round; your own flows stay as they are.</p>
+		</div>
+	);
+}
+
 /** Copies a prompt for an AI chat that turns a round's transcript into a flow file to upload. */
 function PromptCopy() {
 	const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
@@ -135,12 +161,12 @@ function PromptCopy() {
 			);
 
 	return (
-		<div className={styles.prompt}>
-			<button type="button" className={styles.copy} onClick={copy}>
+		<div className={styles.lead}>
+			<button type="button" className={styles.leadButton} onClick={copy}>
 				{status === "copied" ? <CheckIcon size="1rem" weight="bold" /> : <CopyIcon size="1rem" weight="bold" />}
 				<span aria-live="polite">{status === "copied" ? "Copied" : status === "failed" ? "Couldn't copy" : "Copy AI prompt"}</span>
 			</button>
-			<p className={styles.promptText}>Paste it into an AI chat with a round's transcript, save the JSON it returns, and upload it from Open to see the flow.</p>
+			<p className={styles.leadText}>Paste it into an AI chat with a round's transcript, save the JSON it returns, and upload it from Open to see the flow.</p>
 		</div>
 	);
 }
