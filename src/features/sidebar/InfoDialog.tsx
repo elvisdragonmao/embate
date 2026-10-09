@@ -36,7 +36,8 @@ const groups: { title: string; rows: [string, string[]][] }[] = [
 			["Bold", shortcuts.bold],
 			["Italic", shortcuts.italic],
 			["Strikethrough", shortcuts.strike],
-			["Code", shortcuts.code]
+			["Code", shortcuts.code],
+			["Arrow → or ←", [...shortcuts.rightArrow, "/", ...shortcuts.leftArrow]]
 		]
 	},
 	{

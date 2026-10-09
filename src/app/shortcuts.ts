@@ -23,5 +23,7 @@ export const shortcuts = {
 	bold: [k.mod, "B"],
 	italic: [k.mod, "I"],
 	strike: [k.mod, k.shift, "X"],
-	code: [k.mod, "E"]
+	code: [k.mod, "E"],
+	rightArrow: ["->"],
+	leftArrow: ["<-"]
 } satisfies Record<string, string[]>;
