@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { arrangeColumns, defaultLabel, isCross, mapColumns, speechColumns, type Column } from "../lib/columns";
+import { arrangeColumns, defaultLabel, flipColumns, isCross, isFlipped, mapColumns, speechColumns, type Column } from "../lib/columns";
 import { formatOf, type FormatId, type Side } from "../lib/formats";
 import { createId } from "../lib/id";
 import { clockElapsed, prepClock, type Clock, type FlowRecord, type Idea, type IdeaColor } from "../lib/record";
@@ -39,6 +39,8 @@ interface FlowState {
 	setColumnLabel: (col: number, label: string) => void;
 	/** Shows or hides the format's crossfire / cross-examination columns. */
 	setCrossEx: (on: boolean) => void;
+	/** Lets the neg open, in formats where either team may speak first. */
+	setFlipped: (on: boolean) => void;
 	togglePrep: (side: Side) => void;
 	resetPrep: (side: Side) => void;
 	setPrepDuration: (side: Side, ms: number) => void;
@@ -266,6 +268,18 @@ export const useFlowStore = create<FlowState>()((set, get) => {
 			set({
 				record: { ...record, columns, ideas: remapIdeas(record.ideas, map), updatedAt: Date.now() },
 				rev: rev + 1,
+				past: [...past.slice(-HISTORY_LIMIT), snapshotOf(record)],
+				future: []
+			});
+		},
+
+		setFlipped: on => {
+			const { record, past } = get();
+			if (!record) return;
+			const format = formatOf(record.format);
+			if (!format.eitherFirst || isFlipped(format, record.columns) === on) return;
+			set({
+				record: { ...record, columns: flipColumns(format, record.columns, on), updatedAt: Date.now() },
 				past: [...past.slice(-HISTORY_LIMIT), snapshotOf(record)],
 				future: []
 			});
