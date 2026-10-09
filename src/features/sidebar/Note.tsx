@@ -6,7 +6,7 @@ import styles from "./Note.module.css";
 export function Note() {
 	const id = useFlowStore(state => state.record?.id);
 	return (
-		<div className={styles.note}>
+		<div className={styles.note} data-tour="notes">
 			<NoteEditor key={id} />
 		</div>
 	);

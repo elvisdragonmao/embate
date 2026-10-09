@@ -51,7 +51,7 @@ export function Timer() {
 	const state = over ? "over" : warn ? "warn" : "normal";
 
 	return (
-		<section className={styles.timer} data-state={state} data-running={running || undefined}>
+		<section className={styles.timer} data-state={state} data-running={running || undefined} data-tour="timer">
 			<div className={styles.readout}>
 				<ClockText className={styles.digits} label="Speech length" value={display} editable={!running} duration={duration} onCommit={setDuration} />
 				<span className={styles.total} data-visible={started || mode === "stopwatch" || undefined}>

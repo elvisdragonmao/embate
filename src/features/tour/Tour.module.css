@@ -1,0 +1,261 @@
+/* Under menus (40) and tooltips (50), so they still open over the dimmed page; under dialogs (60) too. */
+.spotlight {
+	position: fixed;
+	inset: 0;
+	z-index: 30;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
+	animation: appear var(--dur) var(--ease-out);
+}
+
+/* The hole is outside the fill, so the lit part of the page stays clickable. */
+.dim {
+	fill: oklch(15% 0.02 284 / 0.5);
+	fill-rule: evenodd;
+	pointer-events: auto;
+}
+
+.ring {
+	fill: none;
+	stroke: color-mix(in oklab, var(--accent) 70%, transparent);
+	stroke-width: 2;
+}
+
+.card {
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 35;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	width: min(20rem, calc(100vw - 1.5rem));
+	padding: 0.875rem 1rem 0.75rem;
+	border-radius: var(--radius-l);
+	background: var(--popup-bg);
+	box-shadow: var(--shadow-popup);
+	animation: appear var(--dur) var(--ease-out);
+}
+
+@keyframes appear {
+	from {
+		opacity: 0;
+	}
+}
+
+.count {
+	margin: 0;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--accent);
+}
+
+.title {
+	margin: 0;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.35;
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	font-size: 0.8125rem;
+	line-height: 1.55;
+	color: var(--ctp-subtext1);
+}
+
+.body p {
+	margin: 0;
+}
+
+.body code {
+	padding: 0.0625rem 0.25rem;
+	border-radius: 0.25rem;
+	background: var(--hover);
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+}
+
+.task {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	margin: 0.125rem 0 0;
+	padding: 0.5rem 0.625rem;
+	border-radius: var(--radius-m);
+	background: color-mix(in oklab, var(--accent) 9%, transparent);
+	font-size: 0.8125rem;
+	line-height: 1.45;
+	transition: background-color var(--dur) var(--ease-out);
+}
+
+.task svg {
+	flex: none;
+	margin-top: 0.0625rem;
+	color: var(--accent);
+}
+
+.task b {
+	font-weight: 600;
+}
+
+.task[data-done] {
+	background: color-mix(in oklab, var(--ctp-green) 14%, transparent);
+}
+
+.task[data-done] svg {
+	color: var(--ctp-green);
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.25rem;
+}
+
+.skip {
+	margin-left: -0.5rem;
+	padding: 0.375rem 0.5rem;
+	border: none;
+	border-radius: var(--radius-s);
+	background: transparent;
+	color: var(--text-muted);
+	font-size: 0.8125rem;
+	transition:
+		background-color var(--dur-fast) var(--ease-out),
+		color var(--dur-fast) var(--ease-out);
+}
+
+.skip:hover {
+	background: var(--hover);
+	color: var(--text);
+}
+
+.nav {
+	display: flex;
+	gap: 0.375rem;
+	margin-left: auto;
+}
+
+.primary,
+.secondary {
+	height: 2rem;
+	padding: 0 0.875rem;
+	border: none;
+	border-radius: var(--radius-m);
+	font-size: 0.8125rem;
+	font-weight: 500;
+	transition:
+		background-color var(--dur-fast) var(--ease-out),
+		transform var(--dur-fast) var(--ease-out);
+}
+
+.primary {
+	background: var(--accent);
+	color: var(--ctp-base);
+}
+
+.primary:hover {
+	background: color-mix(in oklab, var(--accent) 88%, var(--ctp-text));
+}
+
+.secondary {
+	background: var(--hover);
+	color: var(--text);
+}
+
+.secondary:hover {
+	background: var(--press);
+}
+
+.primary:active,
+.secondary:active {
+	transform: scale(0.97);
+}
+
+.backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+	background: oklch(15% 0.02 284 / 0.32);
+	backdrop-filter: blur(0.125rem);
+	transition: opacity var(--dur) var(--ease-out);
+}
+
+.backdrop[data-starting-style],
+.backdrop[data-ending-style] {
+	opacity: 0;
+}
+
+.welcome {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	z-index: 61;
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	width: min(25rem, calc(100vw - 2rem));
+	padding: 1.5rem;
+	border-radius: 1.125rem;
+	background: var(--popup-bg);
+	box-shadow: var(--shadow-popup);
+	outline: none;
+	translate: -50% -50%;
+	transition:
+		opacity var(--dur) var(--ease-out),
+		transform var(--dur-spring) var(--ease-spring);
+}
+
+.welcome[data-starting-style],
+.welcome[data-ending-style] {
+	opacity: 0;
+	transform: scale(0.96);
+}
+
+.welcome[data-ending-style] {
+	transition-duration: var(--dur-fast);
+}
+
+.wave {
+	display: grid;
+	place-items: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	margin-bottom: 0.25rem;
+	border-radius: 999rem;
+	background: color-mix(in oklab, var(--accent) 12%, transparent);
+	color: var(--accent);
+}
+
+.welcomeTitle {
+	margin: 0;
+	font-size: 1.125rem;
+	font-weight: 600;
+}
+
+.welcomeText {
+	margin: 0;
+	font-size: 0.875rem;
+	line-height: 1.55;
+	color: var(--ctp-subtext1);
+}
+
+.welcomeActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.welcomeActions .primary,
+.welcomeActions .secondary {
+	height: 2.25rem;
+	padding: 0 1rem;
+}

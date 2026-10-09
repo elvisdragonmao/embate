@@ -10,7 +10,7 @@ export function Sidebar() {
 	return (
 		<aside className={styles.sidebar}>
 			<Brand />
-			<div className={styles.heading}>
+			<div className={styles.heading} data-tour="heading">
 				<EventTitle />
 				<FormatMenu />
 			</div>

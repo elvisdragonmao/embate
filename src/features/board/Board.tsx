@@ -208,9 +208,9 @@ export function Board() {
 
 	return (
 		<BoardContext.Provider value={context}>
-			<IdeaMenu triggerRef={scrollerRef} render={<div className={styles.scroller} />}>
+			<IdeaMenu triggerRef={scrollerRef} render={<div className={styles.scroller} data-tour="board" />}>
 				<div className={styles.canvas} style={style} data-dragging={linkDrag || moving ? "" : undefined}>
-					<header className={styles.header}>
+					<header className={styles.header} data-tour="labels">
 						{columnList.map((column, col) => (
 							<ColumnLabel key={col} col={col} label={column.label} side={column.side} span={geometry.widths[col]} />
 						))}

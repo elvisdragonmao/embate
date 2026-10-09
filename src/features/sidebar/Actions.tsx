@@ -9,7 +9,7 @@ export function Actions() {
 	const setInfoOpen = useUIStore(state => state.setInfoOpen);
 
 	return (
-		<nav className={styles.actions}>
+		<nav className={styles.actions} data-tour="actions">
 			<OpenMenu>
 				<button type="button" className={styles.action}>
 					<FolderOpenIcon size="1.25rem" />

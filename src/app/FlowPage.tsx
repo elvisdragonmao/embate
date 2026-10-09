@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Board } from "../features/board/Board";
 import { Sidebar } from "../features/sidebar/Sidebar";
+import { Tour } from "../features/tour/Tour";
+import { Welcome } from "../features/tour/Welcome";
 import { createDemoRecord, DEMO_ID } from "../lib/demo";
 import { loadRecord, saveRecord } from "../lib/storage";
 import { useFlowStore } from "../stores/flow";
@@ -46,6 +48,8 @@ export function FlowPage() {
 		<div className={styles.workspace}>
 			<Sidebar />
 			<Board key={id} />
+			<Tour />
+			<Welcome />
 		</div>
 	);
 }
