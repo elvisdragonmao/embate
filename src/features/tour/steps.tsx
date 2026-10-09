@@ -1,6 +1,4 @@
 import type { ReactNode } from "react";
-import { shortcuts } from "../../app/shortcuts";
-import { Keys } from "../../components/Hint";
 import { isBlank, type FlowRecord } from "../../lib/record";
 import { TOUR_COLUMNS, TOUR_IDEAS } from "../../lib/tour";
 import { columnOrder } from "../../lib/tree";
@@ -13,17 +11,25 @@ export interface Box {
 	bottom: number;
 }
 
+/** What a task can look at: the flow, when the speech timer last started and whether Info is open. */
+export interface TourState {
+	record: FlowRecord;
+	timer: number | null;
+	infoOpen: boolean;
+}
+
 export interface TourStep {
 	title: string;
-	body: ReactNode;
+	/** One line on what this part of the app does. */
+	body: string;
 	/** What to light up; null dims the whole page and centers the card. */
 	target: (() => Box | null) | null;
 	/** Scrolled into view when the step opens. */
 	reveal?: () => Element | null;
 	/** Where the card goes when there is room; otherwise it goes wherever it fits. */
 	side?: "right" | "bottom";
-	/** Something to try, checked off once the flow shows it, compared with the flow as the step opened. */
-	task?: { text: ReactNode; done: (record: FlowRecord, start: FlowRecord) => boolean };
+	/** One thing to try, checked off once it shows, compared with how things stood as the step opened. */
+	task?: { text: ReactNode; done: (now: TourState, start: TourState) => boolean };
 }
 
 const { AC, NC, NR } = TOUR_COLUMNS;
@@ -71,57 +77,51 @@ const answers = (record: FlowRecord, id: string) => record.ideas.filter(idea => 
 export const STEPS: TourStep[] = [
 	{
 		title: "One column per speech",
-		body: (
-			<>
-				<p>
-					The board follows the round in speaking order. The aff's speeches have blue names and the neg's red ones. This practice round already has a few points, and each arrow runs from an argument
-					to the response that answers it.
-				</p>
-				<p>Click a speech's name to rename it. Pinch on a trackpad to widen or narrow the columns.</p>
-			</>
-		),
+		body: "Each speech gets its own column, in speaking order.",
 		target: () => onBoard(union(boxOf(find('[data-tour="labels"]')), ...Array.from(document.querySelectorAll("[data-idea-id]"), boxOf))),
-		side: "bottom"
+		side: "bottom",
+		task: {
+			text: (
+				<>
+					Click <b>AC</b> and rename it.
+				</>
+			),
+			done: (now, start) => now.record.columns.some((column, col) => column.label !== start.record.columns[col]?.label)
+		}
 	},
 	{
 		title: "Add a point",
-		body: (
-			<p>
-				Click empty space in a column to start a point there. <Keys keys={shortcuts.nextPoint} /> adds the next one, <Keys keys={shortcuts.subPoint} /> makes it a sub-point, and{" "}
-				<Keys keys={shortcuts.stop} /> finishes. Points take Markdown, like <code>**bold**</code>, and typing <code>-&gt;</code> makes an arrow.
-			</p>
-		),
+		body: "Click empty space in a column to write a point there.",
 		target: () => column(NC),
 		reveal: () => columnElement(NC),
 		side: "right",
 		task: {
-			text: "Click the empty space in NC, below the neg's two points, and add a third.",
-			done: (record, start) => record.ideas.some(idea => idea.col === NC && !isBlank(idea.text) && !start.ideas.some(old => old.id === idea.id))
+			text: (
+				<>
+					Click below the neg's points in <b>NC</b> and write a third.
+				</>
+			),
+			done: (now, start) => now.record.ideas.some(idea => idea.col === NC && !isBlank(idea.text) && !start.record.ideas.some(old => old.id === idea.id))
 		}
 	},
 	{
 		title: "Answer with an arrow",
-		body: (
-			<p>
-				Hover a point and click the arrow on its right to answer it in the next speech, or press <Keys keys={shortcuts.extend} /> while writing it. Drag that arrow onto any later point to link the two
-				instead, and click a link to remove it.
-			</p>
-		),
+		body: "Hover a point and click the arrow on its right to answer it in the next speech.",
 		target: () => union(idea(T.turn), column(NR)),
 		reveal: () => columnElement(NR),
 		side: "right",
 		task: {
 			text: (
 				<>
-					Hover the <b>Turn</b> in AR, click its arrow, and write the neg's answer.
+					Click the <b>Turn</b>'s arrow and write the neg's answer.
 				</>
 			),
-			done: (record, start) => answers(record, T.turn) > answers(start, T.turn)
+			done: (now, start) => answers(now.record, T.turn) > answers(start.record, T.turn)
 		}
 	},
 	{
 		title: "Move and nest",
-		body: <p>Drag a point up or down to move it along with its sub-points. Drag it sideways to nest it under the point above, or to pull it back out.</p>,
+		body: "Drag a point up or down to move it, or sideways to nest it.",
 		target: () => column(AC),
 		reveal: () => columnElement(AC),
 		side: "right",
@@ -131,67 +131,67 @@ export const STEPS: TourStep[] = [
 					Drag <b>C2 Mental health</b> above <b>C1 Learning</b>.
 				</>
 			),
-			done: (record, start) => shape(record, AC) !== shape(start, AC)
+			done: (now, start) => shape(now.record, AC) !== shape(start.record, AC)
 		}
 	},
 	{
-		title: "Color and clean up",
-		body: (
-			<p>
-				Right-click a point to color it, unlink it or delete it. Give each color a meaning, such as green for voters and red for dropped arguments. Made a mistake? <Keys keys={shortcuts.undo} />{" "}
-				undoes it.
-			</p>
-		),
+		title: "Color and delete",
+		body: "Right-click a point to color, unlink or delete it.",
 		target: () => union(column(AC), column(NR)),
 		reveal: () => columnElement(AC),
 		side: "right",
 		task: {
 			text: "Right-click a point and pick a color.",
-			done: (record, start) => record.ideas.some(idea => idea.color !== (start.ideas.find(old => old.id === idea.id)?.color ?? null))
+			done: (now, start) => now.record.ideas.some(idea => idea.color !== (start.record.ideas.find(old => old.id === idea.id)?.color ?? null))
 		}
 	},
 	{
-		title: "Name the round, pick the format",
-		body: (
-			<p>
-				Type the round's name at the top. The format under it sets the speeches, quick timers and prep. The buttons beside it add crossfire or cross-ex columns and, in Public Forum, let the neg speak
-				first.
-			</p>
-		),
+		title: "Name and format",
+		body: "The title names the round, and the format under it sets the speeches and timers.",
 		target: () => boxOf(find('[data-tour="heading"]')),
-		side: "right"
+		side: "right",
+		task: {
+			text: "Click the title and rename the round.",
+			done: (now, start) => now.record.title !== start.record.title
+		}
 	},
 	{
 		title: "Time the speeches",
-		body: (
-			<p>
-				Click the digits to set a length, or pick a quick timer to start one. <Keys keys={shortcuts.timerToggle} /> starts and pauses, and the icon beside the digits switches to a stopwatch. Below are
-				each team's prep clocks, which <Keys keys={shortcuts.prepAff} /> and <Keys keys={shortcuts.prepNeg} /> start.
-			</p>
-		),
+		body: "The speech timer, with each team's prep clock under it.",
 		target: () => boxOf(find('[data-tour="timer"]')),
-		side: "right"
+		side: "right",
+		task: {
+			text: "Click the play button to start the timer.",
+			done: (now, start) => now.timer !== null && now.timer !== start.timer
+		}
 	},
 	{
 		title: "Notes",
-		body: <p>Keep the resolution, the teams and your decision here. Notes take Markdown, just like points.</p>,
+		body: "Room for the resolution, the teams and your decision.",
 		target: () => boxOf(find('[data-tour="notes"]')),
-		side: "right"
+		side: "right",
+		task: {
+			text: "Write who won in the notes.",
+			done: (now, start) => now.record.note !== start.record.note
+		}
 	},
 	{
 		title: "Open, Download, Info",
-		body: (
-			<p>
-				Every flow saves in this browser as you type. Open starts a new one, switches between them, uploads a file or loads a full demo round. Download saves this flow as a file. Info lists every
-				shortcut, copies a prompt that turns a transcript into a flow, and starts this tour again.
-			</p>
-		),
+		body: "Open switches flows, Download saves this one as a file, and Info lists every shortcut.",
 		target: () => boxOf(find('[data-tour="actions"]')),
-		side: "right"
+		side: "right",
+		task: {
+			text: (
+				<>
+					Click <b>Info</b> to see every shortcut.
+				</>
+			),
+			done: now => now.infoOpen
+		}
 	},
 	{
 		title: "You're ready to flow",
-		body: <p>That's everything. The practice round goes away, and your own flow opens.</p>,
+		body: "Your own flow opens next, and the practice round goes away.",
 		target: null
 	}
 ];

@@ -5,8 +5,10 @@ import { createPortal } from "react-dom";
 import { isEditableTarget } from "../../lib/platform";
 import { TOUR_ID } from "../../lib/tour";
 import { useFlowStore } from "../../stores/flow";
+import { useTimerStore } from "../../stores/timer";
 import { useTourStore } from "../../stores/tour";
-import { STEPS, type Box, type TourStep } from "./steps";
+import { useUIStore } from "../../stores/ui";
+import { STEPS, type Box, type TourState, type TourStep } from "./steps";
 import styles from "./Tour.module.css";
 import { useEndTour } from "./useTour";
 
@@ -160,9 +162,9 @@ function Overlay({ index }: { index: number }) {
 				<h2 id={titleId} className={styles.title}>
 					{step.title}
 				</h2>
-				<div id={bodyId} className={styles.body}>
+				<p id={bodyId} className={styles.body}>
 					{step.body}
-				</div>
+				</p>
 				{step.task && <Task key={index} task={step.task} />}
 				<div className={styles.footer}>
 					{!last && (
@@ -186,19 +188,28 @@ function Overlay({ index }: { index: number }) {
 	);
 }
 
-/** Something to try on this step; it ticks itself off once the flow shows it was done. */
+/** How things stand, for tasks to compare against; null off the flow. */
+function snapshot(): TourState | null {
+	const record = useFlowStore.getState().record;
+	return record && { record, timer: useTimerStore.getState().startedAt, infoOpen: useUIStore.getState().infoOpen };
+}
+
+/** The one thing to try on this step; it ticks itself off once it shows. */
 function Task({ task }: { task: NonNullable<TourStep["task"]> }) {
 	const [done, setDone] = useState(false);
 
 	useEffect(() => {
-		const start = useFlowStore.getState().record;
+		const start = snapshot();
 		if (!start) return;
-		const unsubscribe = useFlowStore.subscribe(({ record }) => {
-			if (!record || !task.done(record, start)) return;
+		const check = () => {
+			const now = snapshot();
+			if (!now || !task.done(now, start)) return;
 			setDone(true);
-			unsubscribe();
-		});
-		return unsubscribe;
+			stop();
+		};
+		const unsubscribes = [useFlowStore.subscribe(check), useTimerStore.subscribe(check), useUIStore.subscribe(check)];
+		const stop = () => unsubscribes.forEach(unsubscribe => unsubscribe());
+		return stop;
 	}, [task]);
 
 	return (

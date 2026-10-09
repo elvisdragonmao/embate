@@ -25,10 +25,7 @@ export function Welcome() {
 						<HandWavingIcon size="1.375rem" weight="fill" />
 					</span>
 					<Dialog.Title className={styles.welcomeTitle}>Welcome to embate</Dialog.Title>
-					<Dialog.Description className={styles.welcomeText}>
-						A flow sheet for debate judges: each speech gets its own column, and arrows run from every argument to the responses that answer it.
-					</Dialog.Description>
-					<p className={styles.welcomeText}>Want a quick tour? It shows you around on a practice round, so your own flows stay as they are. You can also take it later from Info.</p>
+					<Dialog.Description className={styles.welcomeText}>A flow sheet for debate judges. Want a quick tour on a practice round? Info can start it again anytime.</Dialog.Description>
 					<div className={styles.welcomeActions}>
 						<Dialog.Close className={styles.secondary}>Not now</Dialog.Close>
 						<button
