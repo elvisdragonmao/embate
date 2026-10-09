@@ -22,6 +22,7 @@ Everything saves to your browser's localStorage as you type. You can also downlo
 - The aff and neg prep clocks sit under the main timer; click the digits to change them, or press `⌥[` and `⌥]` to start or pause them.
 - Columns fill the board by default. Pinch on a trackpad to widen or narrow them.
 - `⌘/` opens Info, which lists every shortcut.
+- The first visit offers a tour that walks through all of this on a practice round, lighting up one part of the app at a time; Take the tour at the top of Info runs it again. The practice round goes away when the tour ends.
 - To flow a round from a transcript, click Copy AI prompt at the top of Info, paste the prompt and the transcript into an AI chat, save the JSON it returns as a `.json` file, and upload it from Open.
 
 ## Development
