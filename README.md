@@ -1,10 +1,12 @@
 # embate
 
+A flowing tool for debate judges.
+
 [debate.emtech.cc](https://debate.emtech.cc) · [Try the demo round](https://debate.emtech.cc/f/demo)
 
 ![embate showing the demo Public Forum round in dark mode](.github/screenshot.webp)
 
-A flowing tool for debate judges. The sidebar holds the round's title, format, speech timer, prep clocks and notes; the board lays out one column per speech so you can write down arguments as you hear them and draw an arrow from each response to the argument it answers.
+The sidebar holds the round's title, format, speech timer, prep clocks and notes; the board lays out one column per speech so you can write down arguments as you hear them and draw an arrow from each response to the argument it answers.
 
 Formats: Public Forum, Lincoln–Douglas, Policy, British Parliamentary, World Schools, Asian Parliamentary and 新式奧瑞岡 (Oregon-Oxford). Switching format swaps in that format's speeches, quick timers and prep time.
 
