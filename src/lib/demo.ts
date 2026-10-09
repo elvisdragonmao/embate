@@ -82,8 +82,8 @@ export function createDemoRecord(): FlowRecord {
 		title: "Demo · Phones in Schools",
 		note: NOTE,
 		prep: {
-			aff: { duration: 120_000, elapsed: 75_000, startedAt: null },
-			neg: { duration: 120_000, elapsed: 110_000, startedAt: null }
+			aff: { duration: 180_000, elapsed: 135_000, startedAt: null },
+			neg: { duration: 180_000, elapsed: 170_000, startedAt: null }
 		},
 		ideas: IDEAS.map(idea => ({
 			id: ids.get(idea.key)!,

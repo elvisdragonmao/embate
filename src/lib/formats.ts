@@ -29,7 +29,7 @@ export const FORMATS: Format[] = [
 		speeches: speeches("AC NC AR NR AS NS AFF NFF", "anananan"),
 		sideNames: { aff: "Aff", neg: "Neg" },
 		quick: [4, 3, 2],
-		prep: 2,
+		prep: 3,
 		crossEx: { name: "CF", after: [1, 3, 5], labels: ["CF1", "CF2", "GCF"] },
 		eitherFirst: true
 	},
