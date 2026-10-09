@@ -16,6 +16,8 @@ export interface Format {
 	prep: number | null;
 	/** Cross-examination periods a judge may flow, placed after the given speeches (by index). */
 	crossEx?: { name: string; after: number[]; labels: string[] };
+	/** Either team may speak first (a coin flip decides), so the neg can open instead. */
+	eitherFirst?: boolean;
 }
 
 const speeches = (labels: string, sides: string) => labels.split(" ").map((label, index) => ({ label, side: (sides[index] === "a" ? "aff" : "neg") as Side }));
@@ -28,7 +30,8 @@ export const FORMATS: Format[] = [
 		sideNames: { aff: "Aff", neg: "Neg" },
 		quick: [4, 3, 2],
 		prep: 2,
-		crossEx: { name: "CF", after: [1, 3, 5], labels: ["CF1", "CF2", "GCF"] }
+		crossEx: { name: "CF", after: [1, 3, 5], labels: ["CF1", "CF2", "GCF"] },
+		eitherFirst: true
 	},
 	{
 		id: "ld",
