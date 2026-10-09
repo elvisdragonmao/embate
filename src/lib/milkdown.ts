@@ -1,15 +1,16 @@
 import { defaultValueCtx, Editor, editorViewCtx, editorViewOptionsCtx, parserCtx, rootCtx, serializerCtx } from "@milkdown/kit/core";
 import { clipboard } from "@milkdown/kit/plugin/clipboard";
 import { history } from "@milkdown/kit/plugin/history";
-import { commonmark, emphasisSchema, strongSchema } from "@milkdown/kit/preset/commonmark";
+import { commonmark, emphasisSchema, inlineCodeSchema, strongSchema } from "@milkdown/kit/preset/commonmark";
 import { gfm, strikethroughSchema } from "@milkdown/kit/preset/gfm";
 import { toggleMark } from "@milkdown/kit/prose/commands";
+import { InputRule } from "@milkdown/kit/prose/inputrules";
 import { keymap } from "@milkdown/kit/prose/keymap";
 import type { Node } from "@milkdown/kit/prose/model";
 import { Plugin } from "@milkdown/kit/prose/state";
 import type { DirectEditorProps, EditorView } from "@milkdown/kit/prose/view";
 import "@milkdown/kit/prose/view/style/prosemirror.css";
-import { $prose } from "@milkdown/kit/utils";
+import { $inputRule, $prose } from "@milkdown/kit/utils";
 import { isMac } from "./platform";
 
 type ViewOptions = Partial<Omit<DirectEditorProps, "state">>;
@@ -31,6 +32,16 @@ const extraShortcuts = $prose(ctx =>
 		...(isMac ? { "Ctrl-b": toggleMark(strongSchema.type(ctx)), "Ctrl-i": toggleMark(emphasisSchema.type(ctx)) } : {})
 	})
 );
+
+/** Typing -> or <- makes an arrow, except in inline code; Backspace right after brings the characters back. */
+const arrow = (typed: RegExp, arrow: string) =>
+	$inputRule(
+		ctx =>
+			// Milkdown's input rules ignore `inCodeMark`, so inline code is checked here.
+			new InputRule(typed, (state, _match, start, end) => (state.doc.rangeHasMark(start, end, inlineCodeSchema.type(ctx)) ? null : state.tr.insertText(arrow, start, end)))
+	);
+
+const arrows = [arrow(/->$/, "→"), arrow(/<-$/, "←")];
 
 const changes = (onChange: MarkdownEditorOptions["onChange"]) =>
 	$prose(
@@ -56,6 +67,7 @@ export function createMarkdownEditor({ root, label, value, onChange, viewOptions
 		.use(history)
 		.use(clipboard)
 		.use(extraShortcuts)
+		.use(arrows)
 		.use(changes(onChange))
 		.create();
 }
