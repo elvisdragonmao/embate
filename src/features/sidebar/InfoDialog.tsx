@@ -1,7 +1,9 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { GithubLogoIcon, XIcon } from "@phosphor-icons/react";
+import { CheckIcon, CopyIcon, GithubLogoIcon, XIcon } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
 import { shortcuts } from "../../app/shortcuts";
 import { Keys } from "../../components/Hint";
+import { transcriptPrompt } from "../../lib/prompt";
 import { useUIStore } from "../../stores/ui";
 import styles from "./InfoDialog.module.css";
 
@@ -83,6 +85,7 @@ export function InfoDialog() {
 						</Dialog.Close>
 					</header>
 					<div className={styles.body}>
+						<PromptCopy />
 						<ol className={styles.usage}>
 							{usage.map(line => (
 								<li key={line}>{line}</li>
@@ -109,5 +112,35 @@ export function InfoDialog() {
 				</Dialog.Popup>
 			</Dialog.Portal>
 		</Dialog.Root>
+	);
+}
+
+/** Copies a prompt for an AI chat that turns a round's transcript into a flow file to upload. */
+function PromptCopy() {
+	const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+
+	useEffect(() => {
+		if (status === "idle") return;
+		const timer = setTimeout(() => setStatus("idle"), 2000);
+		return () => clearTimeout(timer);
+	}, [status]);
+
+	const copy = () =>
+		// The clipboard API is missing outside secure contexts; that counts as a failure too.
+		Promise.resolve()
+			.then(() => navigator.clipboard.writeText(transcriptPrompt()))
+			.then(
+				() => setStatus("copied"),
+				() => setStatus("failed")
+			);
+
+	return (
+		<div className={styles.prompt}>
+			<button type="button" className={styles.copy} onClick={copy}>
+				{status === "copied" ? <CheckIcon size="1rem" weight="bold" /> : <CopyIcon size="1rem" weight="bold" />}
+				<span aria-live="polite">{status === "copied" ? "Copied" : status === "failed" ? "Couldn't copy" : "Copy AI prompt"}</span>
+			</button>
+			<p className={styles.promptText}>Paste it into an AI chat with a round's transcript, save the JSON it returns, and upload it from Open to see the flow.</p>
+		</div>
 	);
 }
