@@ -25,5 +25,9 @@ export const shortcuts = {
 	strike: [k.mod, k.shift, "X"],
 	code: [k.mod, "E"],
 	rightArrow: ["->"],
-	leftArrow: ["<-"]
+	leftArrow: ["<-"],
+	doubleArrow: ["=>"],
+	smile: [":)"],
+	frown: [":("],
+	laugh: ["XD"]
 } satisfies Record<string, string[]>;

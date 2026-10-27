@@ -40,7 +40,8 @@ const groups: { title: string; rows: [string, string[]][] }[] = [
 			["Italic", shortcuts.italic],
 			["Strikethrough", shortcuts.strike],
 			["Code", shortcuts.code],
-			["Arrow → or ←", [...shortcuts.rightArrow, "/", ...shortcuts.leftArrow]]
+			["Arrow → ← ⇒", [...shortcuts.rightArrow, "/", ...shortcuts.leftArrow, "/", ...shortcuts.doubleArrow]],
+			["Emoji 🙂 🙁 😆", [...shortcuts.smile, "/", ...shortcuts.frown, "/", ...shortcuts.laugh]]
 		]
 	},
 	{
