@@ -29,6 +29,7 @@ export class CellEditor {
 			root: this.root,
 			label: "Point",
 			value: "",
+			emptyLines: false,
 			onChange: markdown => {
 				if (!this.swapping && this.ideaId) this.onChange(this.ideaId, markdown());
 			},

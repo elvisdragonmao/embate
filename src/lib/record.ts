@@ -66,6 +66,8 @@ export function createRecord(formatId: FormatId = "pf"): FlowRecord {
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
 const str = (value: unknown, fallback = "") => (typeof value === "string" ? value : fallback);
+/** Points used to save empty lines as `<br />`, which shows up as text since points render without Milkdown. */
+const dropEmptyLines = (markdown: string) => markdown.replace(/^([ \t]*(?:(?:[-*+]|\d+[.)])[ \t]+)?)<br \/>[ \t]*$/gm, "$1").trimEnd();
 const num = (value: unknown, fallback: number) => (typeof value === "number" && Number.isFinite(value) ? value : fallback);
 
 /** Validates untrusted JSON (storage or uploads) into a consistent record, dropping broken references. */
@@ -78,7 +80,7 @@ export function normalizeRecord(input: unknown): FlowRecord | null {
 		const col = num(item.col, -1);
 		if (!id || !Number.isInteger(col) || col < 0 || col >= MAX_COLUMNS) return [];
 		const color = IDEA_COLORS.includes(item.color as IdeaColor) ? (item.color as IdeaColor) : null;
-		return [{ id, col, parent: str(item.parent) || null, from: str(item.from) || null, text: str(item.text), color }];
+		return [{ id, col, parent: str(item.parent) || null, from: str(item.from) || null, text: dropEmptyLines(str(item.text)), color }];
 	});
 
 	const seen = new Set<string>();

@@ -1,7 +1,7 @@
 import { defaultValueCtx, Editor, editorViewCtx, editorViewOptionsCtx, parserCtx, rootCtx, serializerCtx } from "@milkdown/kit/core";
 import { clipboard } from "@milkdown/kit/plugin/clipboard";
 import { history } from "@milkdown/kit/plugin/history";
-import { commonmark, emphasisSchema, inlineCodeSchema, strongSchema } from "@milkdown/kit/preset/commonmark";
+import { commonmark, emphasisSchema, inlineCodeSchema, remarkPreserveEmptyLinePlugin, strongSchema } from "@milkdown/kit/preset/commonmark";
 import { gfm, strikethroughSchema } from "@milkdown/kit/preset/gfm";
 import { toggleMark } from "@milkdown/kit/prose/commands";
 import { InputRule } from "@milkdown/kit/prose/inputrules";
@@ -22,6 +22,8 @@ interface MarkdownEditorOptions {
 	value: string;
 	/** Called after every document change; serializing is deferred to the caller. */
 	onChange: (markdown: () => string, view: EditorView) => void;
+	/** Keep empty paragraphs, which Milkdown saves as `<br />`; points are rendered without Milkdown, so they drop them. */
+	emptyLines?: boolean;
 	viewOptions?: ViewOptions;
 }
 
@@ -72,14 +74,16 @@ const changes = (onChange: MarkdownEditorOptions["onChange"]) =>
 			})
 	);
 
-export function createMarkdownEditor({ root, label, value, onChange, viewOptions }: MarkdownEditorOptions) {
+const withoutEmptyLines = commonmark.filter(plugin => !remarkPreserveEmptyLinePlugin.includes(plugin));
+
+export function createMarkdownEditor({ root, label, value, onChange, emptyLines = true, viewOptions }: MarkdownEditorOptions) {
 	return Editor.make()
 		.config(ctx => {
 			ctx.set(rootCtx, root);
 			ctx.set(defaultValueCtx, value);
 			ctx.update(editorViewOptionsCtx, previous => ({ ...previous, ...viewOptions, attributes: { "aria-label": label } }));
 		})
-		.use(commonmark)
+		.use(emptyLines ? commonmark : withoutEmptyLines)
 		.use(gfm)
 		.use(history)
 		.use(clipboard)
