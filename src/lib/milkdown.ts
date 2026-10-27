@@ -33,15 +33,32 @@ const extraShortcuts = $prose(ctx =>
 	})
 );
 
-/** Typing -> or <- makes an arrow, except in inline code; Backspace right after brings the characters back. */
-const arrow = (typed: RegExp, arrow: string) =>
+/** Text matching `typed` becomes `symbol`, except in inline code; Backspace right after brings the characters back. */
+const replace = (typed: RegExp, symbol: string) =>
 	$inputRule(
 		ctx =>
 			// Milkdown's input rules ignore `inCodeMark`, so inline code is checked here.
-			new InputRule(typed, (state, _match, start, end) => (state.doc.rangeHasMark(start, end, inlineCodeSchema.type(ctx)) ? null : state.tr.insertText(arrow, start, end)))
+			new InputRule(typed, (state, match, start, end) => {
+				// The last group, when there is one, is the part replaced; whatever comes before it stays.
+				const from = start + match[0].length - (match[match.length - 1] ?? match[0]).length;
+				return state.doc.rangeHasMark(start, end, inlineCodeSchema.type(ctx)) ? null : state.tr.insertText(symbol, from, end);
+			})
 	);
 
-const arrows = [arrow(/->$/, "→"), arrow(/<-$/, "←")];
+/** Emoticons only count on their own, so `XD` inside a word or `:)` after one stays as typed. */
+const emoticon = (typed: string, emoji: string) => replace(new RegExp(`(?:^|\\s)(${typed.replace(/[()]/g, "\\$&")})$`), emoji);
+
+const replacements = [
+	replace(/->$/, "→"),
+	replace(/<-$/, "←"),
+	replace(/=>$/, "⇒"),
+	emoticon(":)", "🙂"),
+	emoticon(":(", "🙁"),
+	emoticon(":D", "😄"),
+	emoticon(";)", "😉"),
+	emoticon(":P", "😛"),
+	emoticon("XD", "😆")
+];
 
 const changes = (onChange: MarkdownEditorOptions["onChange"]) =>
 	$prose(
@@ -67,7 +84,7 @@ export function createMarkdownEditor({ root, label, value, onChange, viewOptions
 		.use(history)
 		.use(clipboard)
 		.use(extraShortcuts)
-		.use(arrows)
+		.use(replacements)
 		.use(changes(onChange))
 		.create();
 }
