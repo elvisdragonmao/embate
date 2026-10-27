@@ -69,18 +69,35 @@ export interface Layout {
 /**
  * Stacks each column's ideas in reading order. An idea that extends an earlier one
  * is pushed down to line up with its source, like writing a response next to the argument on paper.
+ * A link that skips columns keeps the source's row clear in the columns it crosses, where its arrow runs;
+ * ideas there move below the row.
  */
 export function computeLayout(ideas: Idea[], heights: Map<string, number>, metrics: Metrics, columns: number): Layout {
+	const byId = new Map(ideas.map(idea => [idea.id, idea]));
+	const skips: { source: Idea; target: Idea }[] = [];
+	for (const target of ideas) {
+		const source = target.from ? byId.get(target.from) : undefined;
+		if (source && target.col - source.col > 1) skips.push({ source, target });
+	}
 	const placements = new Map<string, Placement>();
 	let height = 0;
 	for (let col = 0; col < columns; col++) {
+		const order = columnOrder(ideas, col);
+		const rows = skips.flatMap(({ source, target }) => {
+			const from = placements.get(source.id);
+			// A column with its own response to the source is part of the row already.
+			if (!from || source.col >= col || target.col <= col || order.some(({ idea }) => idea.from === source.id)) return [];
+			return [{ top: from.y, bottom: from.y + Math.max(from.height, heights.get(target.id) ?? metrics.estimate) }];
+		});
+		rows.sort((a, b) => a.top - b.top);
 		let cursor = metrics.top;
 		let first = true;
-		for (const { idea, depth } of columnOrder(ideas, col)) {
+		for (const { idea, depth } of order) {
 			const own = heights.get(idea.id) ?? metrics.estimate;
 			let y = first ? cursor : cursor + (depth === 0 ? metrics.groupGap : metrics.gap);
 			const source = idea.from ? placements.get(idea.from) : undefined;
 			if (source) y = Math.max(y, source.y);
+			for (const row of rows) if (y < row.bottom && y + own + metrics.gap > row.top) y = row.bottom + metrics.groupGap;
 			placements.set(idea.id, { col, depth, y, height: own });
 			cursor = y + own;
 			first = false;
