@@ -1,4 +1,5 @@
 import { redoDepth, undoDepth } from "@milkdown/kit/prose/history";
+import { liftListItem, splitListItem } from "@milkdown/kit/prose/schema-list";
 import { Selection } from "@milkdown/kit/prose/state";
 import type { EditorView } from "@milkdown/kit/prose/view";
 import { isComposing, isMac, isMod } from "../../lib/platform";
@@ -35,17 +36,35 @@ function handleKey(id: string, event: KeyboardEvent, view: EditorView): boolean 
 				return true;
 			}
 			if (!plain || event.shiftKey) return false;
+			const { $from, from, to } = view.state.selection;
+			const { doc } = view.state;
+			const blank = $from.parent.content.size === 0;
+			// In a list, Enter starts the next item. On an empty last item it ends the list and moves on to the next
+			// point; anywhere else an empty item steps out of its list.
+			const item = doc.type.schema.nodes.list_item;
+			const inItem = !!item && $from.depth > 1 && $from.node(-1).type === item;
+			const endsList =
+				inItem &&
+				blank &&
+				$from.depth === 3 &&
+				$from.node(2).childCount === 1 &&
+				$from.node(1).childCount > 1 &&
+				$from.index(1) === $from.node(1).childCount - 1 &&
+				$from.index(0) === doc.childCount - 1;
+			if (inItem && !endsList && (blank ? liftListItem(item) : splitListItem(item))(view.state, view.dispatch)) return true;
 			if (isEmpty(view)) {
 				if (idea.parent) flow.outdent(id);
 				else stop(view);
 				return true;
 			}
-			// Split at the caret: the text after it moves into the new point.
-			const { from, to } = view.state.selection;
-			const end = Selection.atEnd(view.state.doc).from;
+			const end = Selection.atEnd(doc).from;
 			let rest = "";
-			if (to < end) {
-				rest = cellEditor.serialize(view.state.doc.cut(to)).trim();
+			if (endsList) view.dispatch(view.state.tr.delete($from.before(2), $from.after(2)));
+			// An empty last line goes rather than staying blank.
+			else if ($from.depth === 1 && blank && $from.index(0) === doc.childCount - 1) view.dispatch(view.state.tr.delete($from.before(), $from.after()));
+			else if (to < end) {
+				// Split at the caret: the text after it moves into the new point.
+				rest = cellEditor.serialize(doc.cut(to)).trim();
 				view.dispatch(view.state.tr.delete(from, end));
 			} else if (from < to) view.dispatch(view.state.tr.delete(from, to));
 			const created = flow.addIdea({ col: idea.col, parent: idea.parent, after: id, text: rest });
